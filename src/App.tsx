@@ -145,7 +145,7 @@ export default function App() {
   const [isProcurementLogsOpen, setIsProcurementLogsOpen] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState<'logs' | 'users' | 'inventory'>('logs');
 
-  // User Mock State
+  // User Mock State - Starts as null (logged out) by default
   const [currentUser, setCurrentUser] = useState<{ 
     name: string; 
     email: string; 
@@ -154,15 +154,8 @@ export default function App() {
     dob?: string;
     gender?: string;
     joinedDate?: string;
-  } | null>({
-    name: "নুসরাত জাহান",
-    email: "info.nusrah.apparle@gmail.com",
-    phone: "০১৭৫X-XXXXXX",
-    profilePic: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200",
-    dob: "1995-10-15",
-    gender: "Female",
-    joinedDate: "October 2023"
-  });
+    role?: 'student' | 'admin';
+  } | null>(null);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot'>('login');
@@ -282,12 +275,12 @@ export default function App() {
   // Checkout Flow State
   const [checkoutStep, setCheckoutStep] = useState<'none' | 'shipping' | 'payment' | 'receipt'>('none');
   const [shippingForm, setShippingForm] = useState({
-    fullName: 'নুসরাত জাহান',
-    phone: '০১৭৫X-XXXXXX',
-    email: 'info.nusrah.apparle@gmail.com',
-    address: 'লেক ভিউ রেসিডেন্স, রোড ৮, গুলশান ১, ঢাকা',
-    deliveryAddress: 'লেক ভিউ রেসিডেন্স, রোড ৮, গুলশান ১, ঢাকা',
-    note: 'ল্যান্ডমার্ক: গুলশান লেকের পাশে, ২য় তলা'
+    fullName: '',
+    phone: '',
+    email: '',
+    address: '',
+    deliveryAddress: '',
+    note: ''
   });
   const [sameAsHome, setSameAsHome] = useState(true);
 
@@ -1466,7 +1459,7 @@ export default function App() {
           </button>
 
           {/* ADMIN ONLY: Procurement Logs Access */}
-          {currentUser?.name === "নুসরাত জাহান" && (
+          {currentUser?.role === 'admin' && (
             <button
               onClick={() => setIsProcurementLogsOpen(true)}
               className="flex items-center gap-1.5 p-2 bg-stone-50 hover:bg-stone-100 text-stone-600 hover:text-brand-navy rounded-full transition-all cursor-pointer border border-stone-200 group"
@@ -4187,12 +4180,12 @@ export default function App() {
                 {[
                   { id: 'overview', label: lang === 'bn' ? 'ড্যাশবোর্ড' : 'Account Overview', icon: LayoutGrid },
                   { id: 'orders', label: lang === 'bn' ? 'অর্ডার হিস্ট্রি' : 'Order History', icon: Package },
-                  { id: 'wishlist', label: lang === 'bn' ? 'পছন্দের তালিকা' : 'My Wishlist', icon: Heart, hideForNusrat: true },
-                  { id: 'addresses', label: lang === 'bn' ? 'ঠিকানা ও লোকেশন' : 'Saved Addresses', icon: MapPinned, hideForNusrat: true },
+                  { id: 'wishlist', label: lang === 'bn' ? 'পছন্দের তালিকা' : 'My Wishlist', icon: Heart, hideForAdmin: true },
+                  { id: 'addresses', label: lang === 'bn' ? 'ঠিকানা ও লোকেশন' : 'Saved Addresses', icon: MapPinned, hideForAdmin: true },
                   { id: 'settings', label: lang === 'bn' ? 'অ্যাকাউন্ট সেটিংস' : 'Profile Settings', icon: Settings },
                   { id: 'register', label: lang === 'bn' ? 'নতুন কাস্টমার নিবন্ধন' : 'Register New Customer', icon: UserPlus }
                 ]
-                .filter(item => !(item.hideForNusrat && currentUser?.name === "নুসরাত জাহান"))
+                .filter(item => !(item.hideForAdmin && currentUser?.role === 'admin'))
                 .map((item) => (
                   <button
                     key={item.id}
