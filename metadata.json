@@ -1,0 +1,6 @@
+{
+  "name": "Nusrah Apparel",
+  "description": "Nusrah Apparel is a premium, professional e-commerce platform offering state-of-the-art Menswear, Saree, Three-piece, Kurti, Cosmetics & Beauty, and Electronics & Gadgets, with secure double-entry checkout.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
