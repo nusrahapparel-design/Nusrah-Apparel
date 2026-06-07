@@ -220,6 +220,9 @@ export default function App() {
         const dbConfig = await dbGetShopConfig();
         if (dbConfig) {
           setShopConfig(prev => ({ ...prev, ...dbConfig }));
+          if (dbConfig.leadership) {
+            setLeadership(dbConfig.leadership);
+          }
         }
       } catch (err) {
         console.error('Error during initial Supabase synchronization sync:', err);
@@ -376,29 +379,44 @@ export default function App() {
   // ==========================================
   // Interactive Leadership State (Editable in-app)
   // ==========================================
-  const [leadership, setLeadership] = useState({
-    ceo: {
-      nameEn: 'Asma Ul Hosna',
-      nameBn: 'আসমা উল হোসনা',
-      titleEn: 'Managing Director',
-      titleBn: 'ব্যবস্থাপনা পরিচালক',
-      pic: 'https://ais-dev-txqe2vtaoppfzdzlywhcie-642796950155.asia-southeast1.run.app/asma_ul_hosna.png',
-      textEn: "Providing the world-class, comfortable & trendy apparel experience is the core goal of Nusrah Apparel. Integrity, pristine finishing, and the love of our respected customers are our guiding paths. Customer trust is our main driving force.",
-      textBn: "ভোক্তাদের জন্য বিশ্বমানের আরামদায়ক ও ট্রেন্ডি পোশাকের অভিজ্ঞতা নিশ্চিত করাই নুসরাহ অ্যাপারেল-এর মূল লক্ষ্য। সততা, নিখুত ফিনিশিং এবং সম্মানিত গ্রাহকদের ভালোবাসাকে পাথেয় করেই আমরা এগিয়ে চলছি। গ্রাহকের আস্থাই আমাদের প্রধান চালিকাশক্তি।"
-    },
-    md: {
-      nameEn: 'Kazi Riazul Hasan',
-      nameBn: 'কাজী রিয়াজুল হাসান',
-      titleEn: 'Director (Operations & Marketing)',
-      titleBn: 'পরিচালক (অপারেশন্স ও মার্কেটিং)',
-      pic: 'https://ais-dev-txqe2vtaoppfzdzlywhcie-642796950155.asia-southeast1.run.app/kazi_riazul_hasan.png',
-      textEn: "From ensuring impeccable finishing of our fabrics to delivering trendy & world-class apparel to our customers' doorsteps—at Nusrah Apparel, we are committed to maintaining excellence at every step. Together with honesty, quality, and the love of our respected customers, we aim to create new fashion experiences.",
-      textBn: "কাপড়ের নিখুঁত ফিনিশিং নিশ্চিত করা থেকে শুরু করে ট্রেন্ডি ও বিশ্বমানের পোশাক গ্রাহকদের দোরগোড়ায় পৌঁছে দেওয়া—নুসরাহ অ্যাপারেল-এর প্রতিটি ধাপেই আমরা শ্রেষ্ঠত্ব বজায় রাখতে দায়বদ্ধ। সততা, গুণগত মান এবং সম্মানিত গ্রাহকদের ভালোবাসাকে সঙ্গী করেই আমরা ফ্যাশন দুনিয়ায় নতুন অভিজ্ঞতা তৈরি করতে চাই।"
+  const [leadership, setLeadership] = useState(() => {
+    const local = localStorage.getItem('nusrah_leadership_v1');
+    const defaultLeadership = {
+      ceo: {
+        nameEn: 'Asma Ul Hosna',
+        nameBn: 'আসমা উল হোসনা',
+        titleEn: 'Managing Director',
+        titleBn: 'ব্যবস্থাপনা পরিচালক',
+        pic: 'https://ais-dev-txqe2vtaoppfzdzlywhcie-642796950155.asia-southeast1.run.app/asma_ul_hosna.png',
+        textEn: "Providing the world-class, comfortable & trendy apparel experience is the core goal of Nusrah Apparel. Integrity, pristine finishing, and the love of our respected customers are our guiding paths. Customer trust is our main driving force.",
+        textBn: "ভোক্তাদের জন্য বিশ্বমানের আরামদায়ক ও ট্রেন্ডি পোশাকের অভিজ্ঞতা নিশ্চিত করাই নুসরাহ অ্যাপারেল-এর মূল লক্ষ্য। সততা, নিখুত ফিনিশিং এবং সম্মানিত গ্রাহকদের ভালোবাসাকে পাথেয় করেই আমরা এগিয়ে চলছি। গ্রাহকের আস্থাই আমাদের প্রধান চালিকাশক্তি।"
+      },
+      md: {
+        nameEn: 'Kazi Riazul Hasan',
+        nameBn: 'কাজী রিয়াজুল হাসান',
+        titleEn: 'Director (Operations & Marketing)',
+        titleBn: 'পরিচালক (অপারেশন্স ও মার্কেটিং)',
+        pic: 'https://ais-dev-txqe2vtaoppfzdzlywhcie-642796950155.asia-southeast1.run.app/kazi_riazul_hasan.png',
+        textEn: "From ensuring impeccable finishing of our fabrics to delivering trendy & world-class apparel to our customers' doorsteps—at Nusrah Apparel, we are committed to maintaining excellence at every step. Together with honesty, quality, and the love of our respected customers, we aim to create new fashion experiences.",
+        textBn: "কাপড়ের নিখুঁত ফিনিশিং নিশ্চিত করা থেকে শুরু করে ট্রেন্ডি ও বিশ্বমানের পোশাক গ্রাহকদের দোরগোড়ায় পৌঁছে দেওয়া—নুসরাহ অ্যাপারেল-এর প্রতিটি ধাপেই আমরা শ্রেষ্ঠত্ব বজায় রাখতে দায়বদ্ধ। সততা, গুণগত মান এবং সম্মানিত গ্রাহকদের ভালোবাসাকে সঙ্গী করেই আমরা ফ্যাশন দুনিয়ায় নতুন অভিজ্ঞতা তৈরি করতে চাই।"
+      }
+    };
+    if (local) {
+      try {
+        return JSON.parse(local);
+      } catch (e) {}
     }
+    return defaultLeadership;
   });
 
   const [isEditingLeadership, setIsEditingLeadership] = useState(false);
   const [editLeaderForm, setEditLeaderForm] = useState({ ...leadership });
+
+  // Sync edit form whenever main leadership state updates
+  useEffect(() => {
+    setEditLeaderForm({ ...leadership });
+    localStorage.setItem('nusrah_leadership_v1', JSON.stringify(leadership));
+  }, [leadership]);
 
   const handleUpdateLeaderField = (role: 'ceo' | 'md', field: string, value: string) => {
     setEditLeaderForm(prev => ({
@@ -410,9 +428,15 @@ export default function App() {
     }));
   };
 
-  const handleSaveLeadership = () => {
-    setLeadership({ ...editLeaderForm });
+  const handleSaveLeadership = async () => {
+    const updated = { ...editLeaderForm };
+    setLeadership(updated);
     setIsEditingLeadership(false);
+    try {
+      await dbSaveShopConfig({ ...shopConfig, leadership: updated });
+    } catch (err) {
+      console.warn("Could not sync leadership to Supabase:", err);
+    }
   };
 
   // ==========================================

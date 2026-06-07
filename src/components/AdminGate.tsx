@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   LayoutDashboard,
   Package,
@@ -118,6 +118,15 @@ export default function AdminGate({
   const [configForm, setConfigForm] = useState({ ...shopConfig });
   const [leadershipForm, setLeadershipForm] = useState({ ...leadership });
 
+  // Dynamically synchronize the forms whenever parent states (loaded asynchronously from Supabase) update
+  useEffect(() => {
+    setConfigForm({ ...shopConfig });
+  }, [shopConfig]);
+
+  useEffect(() => {
+    setLeadershipForm({ ...leadership });
+  }, [leadership]);
+
   // Dashboard Metrics Calculation
   const { totalInvestment, totalProfit, inStockCount, outOfStockCount } = useMemo(() => {
     const inv = products.reduce((acc, p) => acc + ((p.costPrice || 0) * p.stock), 0);
@@ -178,7 +187,7 @@ export default function AdminGate({
     setLeadership(leadershipForm);
     
     try {
-      await dbSaveShopConfig(configForm);
+      await dbSaveShopConfig({ ...configForm, leadership: leadershipForm });
     } catch (err) {
       console.warn('Could not save configuration to Supabase:', err);
     }

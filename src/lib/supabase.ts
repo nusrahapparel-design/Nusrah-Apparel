@@ -411,6 +411,7 @@ export async function dbGetShopConfig(): Promise<any | null> {
         facebookLink: data.facebook_link,
         youtubeLink: data.youtube_link,
         instagramLink: data.instagram_link,
+        leadership: data.leadership || null,
       };
     }
     return null;
@@ -422,7 +423,7 @@ export async function dbGetShopConfig(): Promise<any | null> {
 
 export async function dbSaveShopConfig(config: any): Promise<boolean> {
   try {
-    const mappedConfig = {
+    const mappedConfig: any = {
       id: 'current',
       phone_en: config.phoneEn,
       phone_bn: config.phoneBn,
@@ -441,13 +442,21 @@ export async function dbSaveShopConfig(config: any): Promise<boolean> {
       instagram_link: config.instagramLink,
     };
 
+    const mappedConfigWithLeadership = { ...mappedConfig, leadership: config.leadership };
+
     const { error } = await supabase
       .from('shop_config')
-      .upsert([mappedConfig]);
+      .upsert([mappedConfigWithLeadership]);
 
     if (error) {
-      console.error('Supabase save configuration failure:', error.message);
-      return false;
+      console.warn('Supabase save with leadership column failed, trying fallback without leadership:', error.message);
+      const { error: fallbackError } = await supabase
+        .from('shop_config')
+        .upsert([mappedConfig]);
+      if (fallbackError) {
+        console.error('Supabase save configuration failure:', fallbackError.message);
+        return false;
+      }
     }
     return true;
   } catch (err) {
