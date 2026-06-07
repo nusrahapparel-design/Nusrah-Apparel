@@ -111,6 +111,9 @@ export default function AdminGate({
   // Edit Product Form State
   const [editProductForm, setEditProductForm] = useState<Partial<Product>>({});
 
+  // Product Deletion State - replacement for window.confirm which is blocked in sandboxed iframes
+  const [productIdToDelete, setProductIdToDelete] = useState<string | null>(null);
+
   // Config Form State (Editable banner slogans and info metrics)
   const [configForm, setConfigForm] = useState({ ...shopConfig });
   const [leadershipForm, setLeadershipForm] = useState({ ...leadership });
@@ -185,8 +188,13 @@ export default function AdminGate({
 
   // Remove/Delete product handler
   const handleDeleteProduct = (productId: string) => {
-    if (confirm(lang === 'bn' ? 'আপনি কি নিশ্চিত যে আপনি এই পণ্যটি সম্পূর্ণ মুছে ফেলতে চান?' : 'Are you sure you want to permanently erase this item from database?')) {
-      setProducts(prev => prev.filter(p => p.id !== productId));
+    setProductIdToDelete(productId);
+  };
+
+  const confirmDeleteProduct = () => {
+    if (productIdToDelete) {
+      setProducts(prev => prev.filter(p => p.id !== productIdToDelete));
+      setProductIdToDelete(null);
     }
   };
 
@@ -1990,6 +1998,41 @@ export default function AdminGate({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM CONFIRM DELETION MODAL */}
+      {productIdToDelete && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[999] flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl transition-all scale-100">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-950/40 text-red-500 rounded-full flex items-center justify-center mx-auto mb-5 border border-red-950">
+                <Trash2 className="w-8 h-8" />
+              </div>
+              <h3 className="text-lg font-black text-white tracking-tight uppercase mb-2">
+                {lang === 'bn' ? 'পণ্য মুছে ফেলার নিশ্চিতকরণ' : 'Confirm Product Erasure'}
+              </h3>
+              <p className="text-stone-400 text-xs font-bold leading-relaxed mb-6 uppercase tracking-wider">
+                {lang === 'bn' 
+                  ? 'আপনি কি নিশ্চিত যে আপনি এই পণ্যটি সম্পূর্ণ মুছে ফেলতে চান? এই অ্যাকশনটি পূর্বাবস্থায় ফেরানো যাবে না।' 
+                  : 'Are you sure you want to permanently delete this product? This action cannot be undone.'}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  onClick={() => setProductIdToDelete(null)}
+                  className="w-full sm:w-auto px-6 py-3 bg-transparent hover:bg-stone-800 border border-stone-800 text-stone-400 hover:text-stone-300 font-black uppercase text-[10px] tracking-wider rounded-xl transition-colors cursor-pointer"
+                >
+                  {lang === 'bn' ? 'বাতিল করুন' : 'Cancel'}
+                </button>
+                <button
+                  onClick={confirmDeleteProduct}
+                  className="w-full sm:w-auto px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-black uppercase text-[10px] tracking-wider rounded-xl transition-colors cursor-pointer shadow-lg shadow-red-600/20"
+                >
+                  {lang === 'bn' ? 'হ্যাঁ, মুছে ফেলুন' : 'Yes, Delete'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
