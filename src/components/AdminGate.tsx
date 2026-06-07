@@ -48,6 +48,45 @@ interface AdminGateProps {
   formatPrice: (price: number) => string;
 }
 
+const compressImageFile = (file: File, callback: (resizedBase64: string) => void) => {
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX_WIDTH = 500;
+      const MAX_HEIGHT = 500;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width *= MAX_HEIGHT / height;
+          height = MAX_HEIGHT;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        callback(dataUrl);
+      } else {
+        callback(event.target?.result as string);
+      }
+    };
+    img.src = event.target?.result as string;
+  };
+  reader.readAsDataURL(file);
+};
+
 export default function AdminGate({
   lang,
   setLang,
@@ -1544,11 +1583,9 @@ export default function AdminGate({
                         <input type="file" onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            const reader = new FileReader();
-                            reader.onloadend = () => {
-                              setLeadershipForm(prev => ({...prev, ceo: {...prev.ceo, pic: reader.result as string}}));
-                            };
-                            reader.readAsDataURL(file);
+                            compressImageFile(file, (resized) => {
+                              setLeadershipForm(prev => ({...prev, ceo: {...prev.ceo, pic: resized}}));
+                            });
                           }
                         }} className="w-full bg-stone-850 p-2 rounded text-xs" />
                         <textarea placeholder="Message (EN)" value={leadershipForm.ceo.textEn} onChange={(e) => setLeadershipForm({...leadershipForm, ceo: {...leadershipForm.ceo, textEn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded h-20" />
@@ -1567,11 +1604,9 @@ export default function AdminGate({
                         <input type="file" onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            const reader = new FileReader();
-                            reader.onloadend = () => {
-                              setLeadershipForm(prev => ({...prev, md: {...prev.md, pic: reader.result as string}}));
-                            };
-                            reader.readAsDataURL(file);
+                            compressImageFile(file, (resized) => {
+                              setLeadershipForm(prev => ({...prev, md: {...prev.md, pic: resized}}));
+                            });
                           }
                         }} className="w-full bg-stone-850 p-2 rounded text-xs" />
                         <textarea placeholder="Message (EN)" value={leadershipForm.md.textEn} onChange={(e) => setLeadershipForm({...leadershipForm, md: {...leadershipForm.md, textEn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded h-20" />
@@ -1588,7 +1623,7 @@ export default function AdminGate({
                     className="bg-amber-500 hover:bg-amber-600 text-stone-950 font-black text-xs uppercase tracking-wider px-6 py-3 rounded-lg flex items-center gap-1.5 cursor-pointer shadow-lg transition-all"
                   >
                     <Save className="w-4 h-4" />
-                    <span>Save Parameters Configuration</span>
+                    <span>Save Changes / Apply Live Copy</span>
                   </button>
                 </div>
               </form>
