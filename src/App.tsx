@@ -387,7 +387,7 @@ export default function App() {
         nameBn: 'আসমা উল হোসনা',
         titleEn: 'Managing Director',
         titleBn: 'ব্যবস্থাপনা পরিচালক',
-        pic: 'https://ais-dev-txqe2vtaoppfzdzlywhcie-642796950155.asia-southeast1.run.app/asma_ul_hosna.png',
+        pic: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400',
         textEn: "Providing the world-class, comfortable & trendy apparel experience is the core goal of Nusrah Apparel. Integrity, pristine finishing, and the love of our respected customers are our guiding paths. Customer trust is our main driving force.",
         textBn: "ভোক্তাদের জন্য বিশ্বমানের আরামদায়ক ও ট্রেন্ডি পোশাকের অভিজ্ঞতা নিশ্চিত করাই নুসরাহ অ্যাপারেল-এর মূল লক্ষ্য। সততা, নিখুত ফিনিশিং এবং সম্মানিত গ্রাহকদের ভালোবাসাকে পাথেয় করেই আমরা এগিয়ে চলছি। গ্রাহকের আস্থাই আমাদের প্রধান চালিকাশক্তি।"
       },
@@ -396,14 +396,22 @@ export default function App() {
         nameBn: 'কাজী রিয়াজুল হাসান',
         titleEn: 'Director (Operations & Marketing)',
         titleBn: 'পরিচালক (অপারেশন্স ও মার্কেটিং)',
-        pic: 'https://ais-dev-txqe2vtaoppfzdzlywhcie-642796950155.asia-southeast1.run.app/kazi_riazul_hasan.png',
+        pic: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400',
         textEn: "From ensuring impeccable finishing of our fabrics to delivering trendy & world-class apparel to our customers' doorsteps—at Nusrah Apparel, we are committed to maintaining excellence at every step. Together with honesty, quality, and the love of our respected customers, we aim to create new fashion experiences.",
         textBn: "কাপড়ের নিখুঁত ফিনিশিং নিশ্চিত করা থেকে শুরু করে ট্রেন্ডি ও বিশ্বমানের পোশাক গ্রাহকদের দোরগোড়ায় পৌঁছে দেওয়া—নুসরাহ অ্যাপারেল-এর প্রতিটি ধাপেই আমরা শ্রেষ্ঠত্ব বজায় রাখতে দায়বদ্ধ। সততা, গুণগত মান এবং সম্মানিত গ্রাহকদের ভালোবাসাকে সঙ্গী করেই আমরা ফ্যাশন দুনিয়ায় নতুন অভিজ্ঞতা তৈরি করতে চাই।"
       }
     };
     if (local) {
       try {
-        return JSON.parse(local);
+        const parsed = JSON.parse(local);
+        // Replace broken host URL with beautiful defaults if untouched
+        if (parsed?.ceo?.pic?.includes('asma_ul_hosna.png')) {
+          parsed.ceo.pic = defaultLeadership.ceo.pic;
+        }
+        if (parsed?.md?.pic?.includes('kazi_riazul_hasan.png')) {
+          parsed.md.pic = defaultLeadership.md.pic;
+        }
+        return parsed;
       } catch (e) {}
     }
     return defaultLeadership;
@@ -445,12 +453,12 @@ export default function App() {
   const [shopConfig, setShopConfig] = useState(() => {
     const local = localStorage.getItem('nusrah_shop_config_v1');
     const defaultConfig = {
-      phoneEn: '+8801879-888883',
+      phoneEn: '+88 01879-888883',
       phoneBn: '+৮৮০ ১৮৭৯-৮৮৮৮৮৩',
-      email: 'info.nusrah.apparle@gmail.com',
-      bkashNumbers: ['01851-282847', '01865-275327'],
-      nagadNumbers: ['01851-282847'],
-      rocketNumbers: ['01857-275327'],
+      email: 'nusrah.apparel@gmail.com',
+      bkashNumbers: ['+88 01851-282847', '+88 01879-888883', '+88 01857-275327'],
+      nagadNumbers: ['+88 01851-282847', '+88 01857-275327'],
+      rocketNumbers: ['+88 01857-275327'],
       addressEn: "Nusrah Apparel, Islami Bank Bhaban, New Market, Morichya Bazar, Ukhiya, Cox's Bazar - 4700.",
       addressBn: "নুসরাহ অ্যাপারেলস, ইসলামী ব্যাংক ভবন, নিউ মার্কেট, মরিচ্যা বাজার, উখিয়া, কক্সবাজার-৪৭০০।",
       footerBioEn: "Pioneering custom authentic designs across premium apparel, traditional wear, skin-safe cosmetics & top essential modern electronics gadgets.",
@@ -464,8 +472,8 @@ export default function App() {
     if (local) {
       try {
         const parsed = JSON.parse(local);
-        if (parsed.email === 'nusrah.apparel@gmail.com' || parsed.email === 'info.nusrah-apparel@gmail.com' || !parsed.email) {
-          parsed.email = 'info.nusrah.apparle@gmail.com';
+        if (parsed.email === 'info.nusrah.apparle@gmail.com' || parsed.email === 'info.nusrah-apparel@gmail.com' || !parsed.email) {
+          parsed.email = 'nusrah.apparel@gmail.com';
         }
         return { ...defaultConfig, ...parsed };
       } catch (e) {}

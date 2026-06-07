@@ -394,6 +394,20 @@ export async function dbGetShopConfig(): Promise<any | null> {
       return null;
     }
 
+    let leadershipData = null;
+    try {
+      const { data: leadData, error: leadError } = await supabase
+        .from('shop_config')
+        .select('address_en')
+        .eq('id', 'leadership_current')
+        .single();
+      if (!leadError && leadData && leadData.address_en) {
+        leadershipData = JSON.parse(leadData.address_en);
+      }
+    } catch (err) {
+      console.warn('Could not load leadership from database fallback:', err);
+    }
+
     if (data) {
       return {
         phoneEn: data.phone_en,
@@ -411,7 +425,7 @@ export async function dbGetShopConfig(): Promise<any | null> {
         facebookLink: data.facebook_link,
         youtubeLink: data.youtube_link,
         instagramLink: data.instagram_link,
-        leadership: data.leadership || null,
+        leadership: leadershipData || null,
       };
     }
     return null;
@@ -442,22 +456,30 @@ export async function dbSaveShopConfig(config: any): Promise<boolean> {
       instagram_link: config.instagramLink,
     };
 
-    const mappedConfigWithLeadership = { ...mappedConfig, leadership: config.leadership };
-
-    const { error } = await supabase
+    // 1. Save standard config parameters
+    const { error: configError } = await supabase
       .from('shop_config')
-      .upsert([mappedConfigWithLeadership]);
+      .upsert([mappedConfig]);
 
-    if (error) {
-      console.warn('Supabase save with leadership column failed, trying fallback without leadership:', error.message);
-      const { error: fallbackError } = await supabase
+    if (configError) {
+      console.error('Supabase save configuration failure:', configError.message);
+      return false;
+    }
+
+    // 2. Save leadership data in its own custom row 'leadership_current' using JSON string inside 'address_en'
+    if (config.leadership) {
+      const leadershipPayload = {
+        id: 'leadership_current',
+        address_en: JSON.stringify(config.leadership)
+      };
+      const { error: leadError } = await supabase
         .from('shop_config')
-        .upsert([mappedConfig]);
-      if (fallbackError) {
-        console.error('Supabase save configuration failure:', fallbackError.message);
-        return false;
+        .upsert([leadershipPayload]);
+      if (leadError) {
+        console.warn('Supabase save leadership in row fallback failed:', leadError.message);
       }
     }
+
     return true;
   } catch (err) {
     console.error('Supabase save configuration exception:', err);

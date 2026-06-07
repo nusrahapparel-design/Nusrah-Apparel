@@ -1416,10 +1416,10 @@ export default function AdminGate({
                       {configForm.bkashNumbers?.map((num: string, i: number) => (
                         <div key={i} className="flex gap-2">
                           <input type="text" value={num} onChange={(e) => { const arr = [...configForm.bkashNumbers]; arr[i] = e.target.value; setConfigForm({...configForm, bkashNumbers: arr}); }} className="w-full bg-stone-850 p-2 rounded text-white" />
-                          <button onClick={() => setConfigForm({...configForm, bkashNumbers: configForm.bkashNumbers.filter((_: any, idx: number) => idx !== i)})} className="bg-rose-900 text-rose-200 px-3 py-1 rounded">Remove</button>
+                          <button type="button" onClick={() => setConfigForm({...configForm, bkashNumbers: configForm.bkashNumbers.filter((_: any, idx: number) => idx !== i)})} className="bg-rose-900 text-rose-200 px-3 py-1 rounded">Remove</button>
                         </div>
                       ))}
-                      <button onClick={() => setConfigForm({...configForm, bkashNumbers: [...(configForm.bkashNumbers || []), '']})} className="bg-stone-700 text-white px-3 py-1 rounded text-xs">Add bKash Number</button>
+                      <button type="button" onClick={() => setConfigForm({...configForm, bkashNumbers: [...(configForm.bkashNumbers || []), '']})} className="bg-stone-700 text-white px-3 py-1 rounded text-xs">Add bKash Number</button>
                     </div>
 
                     {/* Nagad */}
@@ -1428,10 +1428,10 @@ export default function AdminGate({
                       {configForm.nagadNumbers?.map((num: string, i: number) => (
                         <div key={i} className="flex gap-2">
                           <input type="text" value={num} onChange={(e) => { const arr = [...configForm.nagadNumbers]; arr[i] = e.target.value; setConfigForm({...configForm, nagadNumbers: arr}); }} className="w-full bg-stone-850 p-2 rounded text-white" />
-                          <button onClick={() => setConfigForm({...configForm, nagadNumbers: configForm.nagadNumbers.filter((_: any, idx: number) => idx !== i)})} className="bg-rose-900 text-rose-200 px-3 py-1 rounded">Remove</button>
+                          <button type="button" onClick={() => setConfigForm({...configForm, nagadNumbers: configForm.nagadNumbers.filter((_: any, idx: number) => idx !== i)})} className="bg-rose-900 text-rose-200 px-3 py-1 rounded">Remove</button>
                         </div>
                       ))}
-                      <button onClick={() => setConfigForm({...configForm, nagadNumbers: [...(configForm.nagadNumbers || []), '']})} className="bg-stone-700 text-white px-3 py-1 rounded text-xs">Add Nagad Number</button>
+                      <button type="button" onClick={() => setConfigForm({...configForm, nagadNumbers: [...(configForm.nagadNumbers || []), '']})} className="bg-stone-700 text-white px-3 py-1 rounded text-xs">Add Nagad Number</button>
                     </div>
 
                     {/* Rocket */}
@@ -1440,10 +1440,10 @@ export default function AdminGate({
                       {configForm.rocketNumbers?.map((num: string, i: number) => (
                         <div key={i} className="flex gap-2">
                           <input type="text" value={num} onChange={(e) => { const arr = [...configForm.rocketNumbers]; arr[i] = e.target.value; setConfigForm({...configForm, rocketNumbers: arr}); }} className="w-full bg-stone-850 p-2 rounded text-white" />
-                          <button onClick={() => setConfigForm({...configForm, rocketNumbers: configForm.rocketNumbers.filter((_: any, idx: number) => idx !== i)})} className="bg-rose-900 text-rose-200 px-3 py-1 rounded">Remove</button>
+                          <button type="button" onClick={() => setConfigForm({...configForm, rocketNumbers: configForm.rocketNumbers.filter((_: any, idx: number) => idx !== i)})} className="bg-rose-900 text-rose-200 px-3 py-1 rounded">Remove</button>
                         </div>
                       ))}
-                      <button onClick={() => setConfigForm({...configForm, rocketNumbers: [...(configForm.rocketNumbers || []), '']})} className="bg-stone-700 text-white px-3 py-1 rounded text-xs">Add Rocket Number</button>
+                      <button type="button" onClick={() => setConfigForm({...configForm, rocketNumbers: [...(configForm.rocketNumbers || []), '']})} className="bg-stone-700 text-white px-3 py-1 rounded text-xs">Add Rocket Number</button>
                     </div>
                   </div>
 
