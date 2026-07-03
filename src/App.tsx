@@ -1729,7 +1729,7 @@ export default function App() {
             onClick={() => setViewportMode("desktop")}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer border-0 ${
               viewportMode === "desktop"
-                ? "bg-amber-500 text-stone-950 shadow-lg shadow-amber-500/20"
+                ? "bg-[#FF6600] text-white shadow-lg shadow-[#FF6600]/20"
                 : "bg-stone-800 text-stone-400 hover:bg-stone-750 hover:text-stone-200"
             }`}
           >
@@ -1741,7 +1741,7 @@ export default function App() {
             onClick={() => setViewportMode("tablet")}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer border-0 ${
               viewportMode === "tablet"
-                ? "bg-amber-500 text-stone-950 shadow-lg shadow-amber-500/20"
+                ? "bg-[#FF6600] text-white shadow-lg shadow-[#FF6600]/20"
                 : "bg-stone-800 text-stone-400 hover:bg-stone-750 hover:text-stone-200"
             }`}
           >
@@ -1753,7 +1753,7 @@ export default function App() {
             onClick={() => setViewportMode("mobile")}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer border-0 ${
               viewportMode === "mobile"
-                ? "bg-amber-500 text-stone-950 shadow-lg shadow-amber-500/20"
+                ? "bg-[#FF6600] text-white shadow-lg shadow-[#FF6600]/20"
                 : "bg-stone-800 text-stone-400 hover:bg-stone-750 hover:text-stone-200"
             }`}
           >
@@ -1808,7 +1808,7 @@ export default function App() {
             {t.support}:{" "}
             <a
               href={`mailto:${shopConfig.email}`}
-              className="hover:text-amber-400 font-bold ml-1 transition-all"
+              className="hover:text-[#FF6600] font-bold ml-1 transition-all"
             >
               {shopConfig.email}
             </a>
@@ -1826,7 +1826,7 @@ export default function App() {
                 setIsLoginModalOpen(true);
               }
             }}
-            className="text-amber-400 hover:text-amber-300 font-extrabold transition-all text-[11px] uppercase tracking-wide cursor-pointer flex items-center gap-1 shrink-0 bg-transparent border-0"
+            className="text-[#FF6600] hover:text-[#FF9933] font-extrabold transition-all text-[11px] uppercase tracking-wide cursor-pointer flex items-center gap-1 shrink-0 bg-transparent border-0"
           >
             <UserCircle className="w-3.5 h-3.5" />
             <span>
@@ -1846,7 +1846,7 @@ export default function App() {
             {/* Language Switch */}
             <button
               onClick={() => setLang(lang === "bn" ? "en" : "bn")}
-              className="bg-slate-800 border border-slate-755 hover:border-slate-600 rounded px-2.5 py-0.5 text-[10px] font-bold text-amber-400 cursor-pointer shadow-xs transition-all"
+              className="bg-slate-800 border border-slate-755 hover:border-slate-600 rounded px-2.5 py-0.5 text-[10px] font-bold text-[#FF6600] cursor-pointer shadow-xs transition-all"
             >
               {lang === "bn" ? "English" : "বাংলা"}
             </button>
