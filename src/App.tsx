@@ -60,6 +60,11 @@ import {
   LogIn,
   Shield,
   Lock,
+  Printer,
+  BookOpen,
+  Newspaper,
+  Laptop,
+  Tablet,
 } from "lucide-react";
 import { Product, CartItem, Review } from "./types";
 import {
@@ -83,12 +88,22 @@ import {
   supabase,
 } from "./lib/supabase";
 
+function hexToRgb(hex: string): string {
+  const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+  const fullHex = hex.replace(shorthandRegex, (_, r, g, b) => r + r + g + g + b + b);
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(fullHex);
+  return result
+    ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`
+    : "250, 250, 249";
+}
+
 export default function App() {
   // ==========================================
   // Core Bilingual & Multi-Currency State
   // ==========================================
   const [lang, setLang] = useState<"bn" | "en">("bn"); // Default to Bangla for high local affinity
   const [currency, setCurrency] = useState<"BDT" | "USD">("BDT");
+  const [viewportMode, setViewportMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
 
   // Core Data States
   const [products, setProducts] = useState<Product[]>(() => {
@@ -321,6 +336,58 @@ export default function App() {
   };
 
   // Checkout Flow State
+  // ----------------------------------------------------
+  // E-COMMERCE EXTRA FEATURES (VALOBAZAR INSPIRED)
+  // ----------------------------------------------------
+  // Fake Order Prevention Verification PIN
+  const [securityPin, setSecurityPin] = useState(() => Math.floor(1000 + Math.random() * 9000).toString());
+  const [userPinInput, setUserPinInput] = useState("");
+
+  // Order Tracking System
+  const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+  const [trackingOrderIdInput, setTrackingOrderIdInput] = useState("");
+  const [trackedOrderResult, setTrackedOrderResult] = useState<any | null>(null);
+
+  // Articles & Fashion Blog
+  const [isBlogOpen, setIsBlogOpen] = useState(false);
+  const [selectedBlogPost, setSelectedBlogPost] = useState<any | null>(null);
+  const [blogPosts, setBlogPosts] = useState<any[]>(() => {
+    const local = localStorage.getItem("nusrah_blog_posts_v1");
+    if (local) {
+      try { return JSON.parse(local); } catch (e) {}
+    }
+    return [
+      {
+        id: "post-1",
+        titleEn: "Top 5 Summer Saree Styles for Elegant Occasions",
+        titleBn: "গ্রীষ্মকালীন শাড়ি কালেকশন: সেরা ৫টি স্টাইল এবং ফ্যাবরিক গাইড",
+        author: "Asma Ul Hosna",
+        date: "July 2, 2026",
+        image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=600",
+        summaryEn: "Discover how lightweight fabrics like cotton, linen, and Georgette can keep you stylish and comfortable.",
+        summaryBn: "গরমের দিনে সুতি, হাফ সিল্ক এবং জর্জেট শাড়ির আরামদায়ক ও গ্ল্যামারাস সাজ নিয়ে আমাদের বিশেষ প্রতিবেদন।",
+        contentEn: "Summer demands lightweight and breathable fabrics. At Nusrah, we select our cotton sarees with high thread counts to ensure maximum comfort while retaining that elegant luxury drape. Pair them with pastel-colored blouses and minimalistic gold jewelry for a formal look, or vibrant colors for festive evenings.",
+        contentBn: "গরম আবহাওয়ায় আরাম আর আভিজাত্য একসাথে বজায় রাখা কঠিন চ্যালেঞ্জ। সুতি শাড়ি সবসময়ই বাঙালির প্রিয়, তবে আজকাল হাফ-সিল্ক এবং সুতি জর্জেটের চাহিদাও তুঙ্গে। বিশেষ করে প্যাস্টেল শেডের শাড়িগুলোতে আধুনিকতার ছোঁয়া ফুটিয়ে তুলতে হালকা মেকআপ ও জুয়েলারি ব্যবহার করা বুদ্ধিমানের কাজ।"
+      },
+      {
+        id: "post-2",
+        titleEn: "Essential Menswear: Traditional Punjabi to Smart Polos",
+        titleBn: "পুরুষদের ঐতিহ্যবাহী পাঞ্জাবি ও ক্যাজুয়াল স্টাইলের মেলবন্ধন",
+        author: "Kazi Riazul Hasan",
+        date: "June 28, 2026",
+        image: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&q=80&w=600",
+        summaryEn: "Bridging the gap between timeless Bengali heritage wear and contemporary western essentials.",
+        summaryBn: "বাঙালির চিরন্তন পাঞ্জাবি স্টাইল এবং আধুনিক স্মার্ট পলো টি-শার্টের ট্রেন্ড নিয়ে বিশদ আলোচনা।",
+        contentEn: "A traditional Punjabi represents character and cultural identity. For festive occasions, choose premium cotton or silk-blends with subtle embroidery on the collar. For daily workspace or active life, smart polos in breathable honeycomb cotton provide unmatched versatility and modern sharpness.",
+        contentBn: "পাঞ্জাবি শুধু একটি উৎসবের পোশাক নয়, এটি বাঙালির ঐতিহ্য ও ব্যক্তিত্বের প্রকাশ। বর্তমান সময়ে ক্যাজুয়াল আউটফিট হিসেবে কলার এমব্রয়ডারি করা প্রিমিয়াম কটন পাঞ্জাবি বেশ জনপ্রিয়। অফিসে নিয়মিত যাতায়াত বা বন্ধুদের সাথে আড্ডায় নুসরাহ পলো শার্ট দিবে পারফেক্ট ক্যাজুয়াল লুক।"
+      }
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("nusrah_blog_posts_v1", JSON.stringify(blogPosts));
+  }, [blogPosts]);
+
   const [checkoutStep, setCheckoutStep] = useState<
     "none" | "shipping" | "payment" | "receipt"
   >("none");
@@ -409,7 +476,132 @@ export default function App() {
     address?: string;
     deliveryAddress?: string;
     note?: string;
+    txId?: string;
   } | null>(null);
+
+  const handlePrintInvoice = (receipt: any) => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      alert("Please allow popups to download and print invoices.");
+      return;
+    }
+    const itemsHtml = receipt.items.map((item: any) => `
+      <tr style="border-bottom: 1px solid #e5e7eb;">
+        <td style="padding: 12px 0; font-weight: bold; text-align: left;">
+          ${lang === "bn" ? item.product.bnName : item.product.name}
+          <div style="font-size: 11px; color: #6b7280; font-weight: normal; margin-top: 2px;">
+            Size: ${item.selectedSize || "N/A"} | Color: ${item.selectedColor ? item.selectedColor.name : "N/A"}
+          </div>
+        </td>
+        <td style="padding: 12px 0; text-align: center;">${item.quantity}</td>
+        <td style="padding: 12px 0; text-align: right; font-family: monospace;">${item.product.price} BDT</td>
+        <td style="padding: 12px 0; text-align: right; font-family: monospace; font-weight: bold;">${item.product.price * item.quantity} BDT</td>
+      </tr>
+    `).join("");
+
+    const logoUrl = shopConfig.logoUrl || "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&q=80&w=200";
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Invoice - ${receipt.orderId}</title>
+          <style>
+            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #1f2937; line-height: 1.5; }
+            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #111827; padding-bottom: 20px; }
+            .logo-title { display: flex; align-items: center; gap: 15px; }
+            .logo { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 2px solid #c5a059; }
+            .store-name { font-size: 24px; font-weight: 900; color: #001f3f; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+            .store-tag { font-size: 11px; color: #c5a059; margin: 2px 0 0 0; font-weight: bold; text-transform: uppercase; }
+            .invoice-title { text-align: right; }
+            .invoice-title h1 { font-size: 26px; font-weight: 900; color: #111827; margin: 0; text-transform: uppercase; letter-spacing: 2px; }
+            .invoice-details { display: flex; justify-content: space-between; margin-top: 30px; font-size: 13px; }
+            .details-col { flex: 1; }
+            .details-col h3 { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #374151; margin-bottom: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; margin-top: 0; }
+            table { width: 100%; border-collapse: collapse; margin-top: 40px; font-size: 13px; }
+            th { border-bottom: 2px solid #374151; padding: 10px 0; text-align: left; font-weight: 800; text-transform: uppercase; font-size: 11px; color: #4b5563; }
+            .total-row { border-top: 2px solid #111827; font-weight: bold; }
+            .total-row td { padding: 12px 0; font-size: 15px; }
+            .footer { margin-top: 60px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 20px; font-size: 11px; color: #6b7280; }
+            .stamp { border: 2px dashed #059669; color: #059669; display: inline-block; padding: 5px 15px; font-weight: 900; text-transform: uppercase; border-radius: 6px; transform: rotate(-5deg); font-size: 13px; margin-top: 10px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="logo-title">
+              <img src="${logoUrl}" class="logo" />
+              <div>
+                <h2 class="store-name">${shopConfig.name || "Nusrah Apparel"}</h2>
+                <p class="store-tag">Premium Islamic & Traditional Wear</p>
+              </div>
+            </div>
+            <div class="invoice-title">
+              <h1>INVOICE</h1>
+              <p style="margin: 5px 0 0 0; font-size: 12px; font-weight: bold; color: #6b7280;">Order ID: ${receipt.orderId}</p>
+            </div>
+          </div>
+
+          <div class="invoice-details">
+            <div class="details-col" style="margin-right: 40px;">
+              <h3>Customer & Shipping Info</h3>
+              <p style="margin: 4px 0;"><strong>Name:</strong> ${receipt.fullName}</p>
+              <p style="margin: 4px 0;"><strong>Phone:</strong> ${receipt.phone}</p>
+              ${receipt.email ? `<p style="margin: 4px 0;"><strong>Email:</strong> ${receipt.email}</p>` : ""}
+              <p style="margin: 4px 0;"><strong>Delivery Address:</strong> ${receipt.deliveryAddress || receipt.address}</p>
+            </div>
+            <div class="details-col" style="max-width: 250px;">
+              <h3>Billing & Delivery Status</h3>
+              <p style="margin: 4px 0;"><strong>Date:</strong> ${receipt.date}</p>
+              <p style="margin: 4px 0;"><strong>Payment Method:</strong> <span style="text-transform: uppercase; color: #059669; font-weight: bold;">${receipt.paymentMethod}</span></p>
+              <p style="margin: 4px 0;"><strong>Order Status:</strong> <span style="color: #059669; font-weight: bold;">CONFIRMED</span></p>
+              <div class="stamp">SUCCESSFULLY ORDERED</div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="text-align: left;">Item Description</th>
+                <th style="text-align: center; width: 60px;">Qty</th>
+                <th style="text-align: right; width: 100px;">Price</th>
+                <th style="text-align: right; width: 100px;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+              <tr>
+                <td colspan="2" style="padding: 10px 0;"></td>
+                <td style="padding: 10px 0; text-align: right; color: #6b7280;">Subtotal:</td>
+                <td style="padding: 10px 0; text-align: right; font-family: monospace;">${receipt.subtotal} BDT</td>
+              </tr>
+              <tr>
+                <td colspan="2" style="padding: 10px 0;"></td>
+                <td style="padding: 10px 0; text-align: right; color: #6b7280;">Shipping:</td>
+                <td style="padding: 10px 0; text-align: right; font-family: monospace;">${receipt.shipping === 0 ? "FREE" : receipt.shipping + " BDT"}</td>
+              </tr>
+              <tr class="total-row">
+                <td colspan="2" style="padding: 12px 0;"></td>
+                <td style="padding: 12px 0; text-align: right; text-transform: uppercase;">Grand Total:</td>
+                <td style="padding: 12px 0; text-align: right; font-family: monospace; font-size: 16px; color: #001f3f;">${receipt.total} BDT</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="footer">
+            <p style="margin: 5px 0; font-weight: bold;">Thank you for shopping with ${shopConfig.name || "Nusrah Apparel"}!</p>
+            <p style="margin: 5px 0;">This is an officially certified, system-authorized electronic receipt. Nusrah covers all garments with a premium quality guarantee.</p>
+            <p style="margin: 5px 0; font-size: 10px; color: #9ca3af;">Nusrah Apparel & Boutique Corp. | DHAKA, BANGLADESH</p>
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
 
   // Detail Modal Controls
   const [detailQuantity, setDetailQuantity] = useState(1);
@@ -547,6 +739,42 @@ export default function App() {
       facebookLink: "https://www.facebook.com/nusrahapparel",
       youtubeLink: "https://www.youtube.com/@nusrahapparel",
       instagramLink: "https://www.instagram.com/nusrahapparel",
+      themeBgColor: "#fafaf9",
+      themeTextColor: "#1c1917",
+      themeFontFamily: "sans",
+      themeFontSize: "100%",
+      themeBgImageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=1600",
+      themeBgOpacity: "94",
+      // Hero Custom Settings
+      heroBadgeTextBn: "সকাল এর জন্য সেরা অফার",
+      heroBadgeTextEn: "🔥 MORNING HIT BEST DEALS",
+      heroBadgeBgColor: "#fbbf24",
+      heroBadgeTextColor: "#1c1917",
+      heroBgColor: "#1c1917",
+      heroTextColor: "#f5f5f4",
+      heroBgImageUrl: "",
+      heroBgOpacity: "10",
+      heroFontFamily: "sans",
+      heroFontSize: "100%",
+      // Previewer Custom Settings
+      previewerTitleBn: "রেসপনসিভ ডিভাইস প্রিভিউয়ার",
+      previewerTitleEn: "Responsive Device Previewer",
+      previewerBgColor: "#1c1917",
+      previewerTextColor: "#f5f5f4",
+      previewerBgImageUrl: "",
+      previewerBgOpacity: "100",
+      previewerLogoUrl: "",
+      previewerFontFamily: "sans",
+      previewerFontSize: "100%",
+      // Footer Custom Settings
+      footerBgColor: "#1c1917",
+      footerTextColor: "#a8a29e",
+      footerTitleColor: "#f5f5f4",
+      footerBgImageUrl: "",
+      footerBgOpacity: "100",
+      footerLogoUrl: "",
+      footerFontFamily: "sans",
+      footerFontSize: "100%"
     };
     if (local) {
       try {
@@ -1413,12 +1641,156 @@ export default function App() {
         adminToken={adminToken}
         setAdminToken={setAdminToken}
         formatPrice={formatPrice}
+        blogPosts={blogPosts}
+        setBlogPosts={setBlogPosts}
       />
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col antialiased">
+    <div className={viewportMode !== "desktop" ? "min-h-screen w-full bg-stone-950 flex flex-col items-center justify-start overflow-y-auto" : "contents"}>
+      {/* Dynamic Style injection block */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;700&family=Caveat:wght@400;700&family=Noto+Serif+Bengali:wght@400;700&display=swap');
+        
+        .custom-dynamic-theme {
+          background-color: ${shopConfig.themeBgColor || '#fafaf9'} !important;
+          color: ${shopConfig.themeTextColor || '#1c1917'} !important;
+          font-family: ${
+            shopConfig.themeFontFamily === 'serif' ? '"Playfair Display", Georgia, serif' :
+            shopConfig.themeFontFamily === 'mono' ? '"JetBrains Mono", Courier, monospace' :
+            shopConfig.themeFontFamily === 'space' ? '"Space Grotesk", sans-serif' :
+            shopConfig.themeFontFamily === 'cursive' ? '"Caveat", cursive' :
+            shopConfig.themeFontFamily === 'bengali' ? '"Noto Serif Bengali", sans-serif' :
+            '"Inter", system-ui, sans-serif'
+          } !important;
+          font-size: ${shopConfig.themeFontSize || '100%'} !important;
+        }
+
+        .custom-dynamic-theme-bg {
+          ${shopConfig.themeBgImageUrl ? `
+            background-image: linear-gradient(rgba(${hexToRgb(shopConfig.themeBgColor || '#fafaf9')}, ${shopConfig.themeBgOpacity ? Number(shopConfig.themeBgOpacity) / 100 : 0.94}), rgba(${hexToRgb(shopConfig.themeBgColor || '#fafaf9')}, ${shopConfig.themeBgOpacity ? Number(shopConfig.themeBgOpacity) / 100 : 0.94})), url('${shopConfig.themeBgImageUrl}') !important;
+            background-attachment: fixed !important;
+            background-size: cover !important;
+            background-position: center !important;
+          ` : `
+            background-image: none !important;
+            background-color: ${shopConfig.themeBgColor || '#fafaf9'} !important;
+          `}
+        }
+      `}</style>
+
+      {/* Floating or Top fixed Device Viewport Controller Toolbar */}
+      <div
+        className="w-full border-b border-stone-800 px-4 py-3 flex flex-wrap items-center justify-between gap-4 z-50 shadow-md relative overflow-hidden transition-all duration-300"
+        style={{
+          backgroundColor: shopConfig.previewerBgColor || '#FF6600',
+          color: shopConfig.previewerTextColor || '#FFFFFF',
+          fontFamily: shopConfig.previewerFontFamily === 'serif' ? '"Playfair Display", serif' :
+                      shopConfig.previewerFontFamily === 'space' ? '"Space Grotesk", sans-serif' :
+                      shopConfig.previewerFontFamily === 'mono' ? '"JetBrains Mono", monospace' :
+                      shopConfig.previewerFontFamily === 'cursive' ? '"Caveat", cursive' :
+                      shopConfig.previewerFontFamily === 'bengali' ? '"Noto Serif Bengali", serif' :
+                      'inherit',
+          fontSize: shopConfig.previewerFontSize || '100%',
+        }}
+      >
+        {/* Background Image with opacity */}
+        {shopConfig.previewerBgImageUrl && (
+          <div
+            className="absolute inset-0 bg-cover bg-center pointer-events-none transition-all duration-300"
+            style={{
+              backgroundImage: `url(${shopConfig.previewerBgImageUrl})`,
+              opacity: (Number(shopConfig.previewerBgOpacity ?? 100) / 100),
+            }}
+          />
+        )}
+        <div className="flex items-center gap-2.5 relative z-10">
+          {shopConfig.previewerLogoUrl ? (
+            <img
+              src={shopConfig.previewerLogoUrl}
+              alt="Previewer Logo"
+              className="h-6 w-auto object-contain rounded"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+          )}
+          <span className="text-xs font-black uppercase tracking-wider" style={{ color: shopConfig.previewerTextColor || '#fbbf24' }}>
+            {lang === "bn" ? (shopConfig.previewerTitleBn || "রেসপনসিভ ডিভাইস প্রিভিউয়ার") : (shopConfig.previewerTitleEn || "Responsive Device Previewer")}
+          </span>
+          <span className="text-[10px] bg-stone-800 text-stone-400 px-2 py-0.5 rounded border border-stone-750 font-bold uppercase">
+            {viewportMode === "desktop" ? "Laptop / Desktop" : viewportMode === "tablet" ? "Tablet" : "Mobile"}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setViewportMode("desktop")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer border-0 ${
+              viewportMode === "desktop"
+                ? "bg-amber-500 text-stone-950 shadow-lg shadow-amber-500/20"
+                : "bg-stone-800 text-stone-400 hover:bg-stone-750 hover:text-stone-200"
+            }`}
+          >
+            <Laptop className="w-3.5 h-3.5" />
+            <span>{lang === "bn" ? "ল্যাপটপ / ডেস্কটপ" : "Laptop / Desktop"}</span>
+          </button>
+
+          <button
+            onClick={() => setViewportMode("tablet")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer border-0 ${
+              viewportMode === "tablet"
+                ? "bg-amber-500 text-stone-950 shadow-lg shadow-amber-500/20"
+                : "bg-stone-800 text-stone-400 hover:bg-stone-750 hover:text-stone-200"
+            }`}
+          >
+            <Tablet className="w-3.5 h-3.5" />
+            <span>{lang === "bn" ? "ট্যাবলেট" : "Tablet / Tab"}</span>
+          </button>
+
+          <button
+            onClick={() => setViewportMode("mobile")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer border-0 ${
+              viewportMode === "mobile"
+                ? "bg-amber-500 text-stone-950 shadow-lg shadow-amber-500/20"
+                : "bg-stone-800 text-stone-400 hover:bg-stone-750 hover:text-stone-200"
+            }`}
+          >
+            <Smartphone className="w-3.5 h-3.5" />
+            <span>{lang === "bn" ? "মোবাইল" : "Mobile"}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Viewport Frame Box Wrapper */}
+      <div
+        className={
+          viewportMode === "desktop"
+            ? "w-full flex-1 flex flex-col"
+            : viewportMode === "tablet"
+            ? "w-full max-w-[768px] h-[1024px] mx-auto my-8 border-[14px] border-stone-800 rounded-[32px] shadow-2xl overflow-y-auto flex flex-col bg-slate-50 relative custom-device-frame-tablet"
+            : "w-full max-w-[390px] h-[844px] mx-auto my-8 border-[14px] border-stone-800 rounded-[40px] shadow-2xl overflow-y-auto flex flex-col bg-slate-50 relative custom-device-frame-mobile"
+        }
+      >
+        {viewportMode === "mobile" && (
+          <div className="absolute top-0 inset-x-0 h-6 bg-stone-900 flex items-center justify-between px-6 text-[10px] text-white/85 z-50 rounded-t-sm select-none">
+            <span className="font-bold">9:41</span>
+            <div className="w-16 h-4 bg-stone-950 rounded-full mx-auto absolute left-1/2 transform -translate-x-1/2 top-1" />
+            <div className="flex items-center gap-1.5">
+              <span>5G</span>
+              <span className="w-4 h-2 bg-white/80 rounded-xs" />
+            </div>
+          </div>
+        )}
+
+        {viewportMode === "tablet" && (
+          <div className="absolute top-0 inset-x-0 h-4 bg-stone-900 flex items-center justify-center z-50 rounded-t-sm">
+            <div className="w-2.5 h-2.5 rounded-full bg-stone-950" />
+          </div>
+        )}
+
+        <div className={`min-h-screen bg-[#037399] text-white font-sans flex flex-col antialiased ${viewportMode !== "desktop" ? "pt-6" : ""}`}>
       {/* 1. ANNOUNCEMENT HEADER */}
       <header
         id="announcement-banner"
@@ -1505,15 +1877,15 @@ export default function App() {
         >
           <div className="w-11 h-11 bg-white border border-stone-200 rounded-full overflow-hidden flex items-center justify-center shadow-xs transform transition-all group-hover:scale-105 duration-300">
             <img
-              src={nusrahLogo}
+              src={shopConfig.logoUrl || nusrahLogo}
               alt="Nusrah Apparel Logo"
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
             />
           </div>
           <div className="flex flex-col">
-            <span className="text-base sm:text-lg font-black tracking-tight text-stone-900 group-hover:text-brand-gold transition-colors uppercase leading-none">
-              NUSRAH APPAREL
+            <span className="text-base sm:text-lg font-black tracking-tight text-[#037399] group-hover:text-brand-gold transition-colors uppercase leading-none">
+              {shopConfig.name || "NUSRAH APPAREL"}
             </span>
             <span className="text-[10px] font-extrabold text-stone-500 tracking-widest uppercase mt-0.5">
               {lang === "bn" ? "নুসরাহ অ্যাপারেল" : "Nusrah Apparel Boutique"}
@@ -1750,6 +2122,15 @@ export default function App() {
           >
             {lang === "bn" ? "ইলেকট্রনিক্স ও গ্যাজেট" : "ELECTRONICS & GADGETS"}
           </button>
+
+          {/* 5. FASHION BLOG */}
+          <button
+            onClick={() => setIsBlogOpen(true)}
+            className="hover:text-amber-500 transition-colors py-1 cursor-pointer border-b-2 text-[11px] tracking-wider border-transparent text-stone-600 font-bold flex items-center gap-1"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-brand-gold" />
+            <span>{lang === "bn" ? "ফ্যাশন ব্লগ" : "FASHION BLOG"}</span>
+          </button>
         </div>
 
         {/* Central Live Search */}
@@ -1940,19 +2321,47 @@ export default function App() {
       {/* 3. HOME HERO INTUITION SLIDERS */}
       <section
         id="banner-carousel"
-        className="bg-stone-900 overflow-hidden relative min-h-[380px] flex items-center text-white border-b border-stone-850"
+        className="overflow-hidden relative min-h-[380px] flex items-center border-b border-stone-850 transition-all duration-300"
+        style={{
+          backgroundColor: shopConfig.heroBgColor || '#1c1917',
+          color: shopConfig.heroTextColor || '#f5f5f4',
+          fontFamily: shopConfig.heroFontFamily === 'serif' ? '"Playfair Display", serif' :
+                      shopConfig.heroFontFamily === 'space' ? '"Space Grotesk", sans-serif' :
+                      shopConfig.heroFontFamily === 'mono' ? '"JetBrains Mono", monospace' :
+                      shopConfig.heroFontFamily === 'cursive' ? '"Caveat", cursive' :
+                      shopConfig.heroFontFamily === 'bengali' ? '"Noto Serif Bengali", serif' :
+                      'inherit',
+          fontSize: shopConfig.heroFontSize || '100%',
+        }}
       >
-        <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 items-center p-5 sm:p-8 md:p-10 gap-6 lg:gap-10 relative">
+        {/* Dynamic Background Image overlay */}
+        {shopConfig.heroBgImageUrl && (
+          <div
+            className="absolute inset-0 bg-cover bg-center transition-all duration-300 pointer-events-none"
+            style={{
+              backgroundImage: `url(${shopConfig.heroBgImageUrl})`,
+              opacity: (Number(shopConfig.heroBgOpacity ?? 10) / 100),
+            }}
+          />
+        )}
+        <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 items-center p-5 sm:p-8 md:p-10 gap-6 lg:gap-10 relative z-10">
           {/* Active Featured Slide Details (LHS - 7 Columns on Desktop) */}
           <div className="lg:col-span-7 space-y-4 md:space-y-5 flex flex-col justify-center">
             {heroSlides.map((slide, index) => {
               if (index !== activeHeroIndex) return null;
               return (
                 <div key={slide.id} className="space-y-4 animate-fade-in">
-                  <span className="bg-brand-gold/20 text-brand-gold border border-brand-gold/35 font-black text-[10px] tracking-widest uppercase px-3 py-1 rounded-full w-fit inline-block">
+                  <span
+                    className="font-black text-[10px] tracking-widest uppercase px-3 py-1 rounded-full w-fit inline-block border transition-all duration-300"
+                    style={{
+                      backgroundColor: shopConfig.heroBadgeBgColor || 'rgba(251, 191, 36, 0.2)',
+                      color: shopConfig.heroBadgeTextColor || '#fbbf24',
+                      borderColor: (shopConfig.heroBadgeTextColor || '#fbbf24') + '55',
+                    }}
+                  >
                     {lang === "bn"
-                      ? "সকাল এর জন্য সেরা অফার"
-                      : "🔥 EXCLUSIVE PREMIUM HIT"}
+                      ? (shopConfig.heroBadgeTextBn || "সকাল এর জন্য সেরা অফার")
+                      : (shopConfig.heroBadgeTextEn || "🔥 EXCLUSIVE PREMIUM HIT")}
                   </span>
                   <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
                     {lang === "bn" ? slide.bnName : slide.name}
@@ -2216,15 +2625,15 @@ export default function App() {
                 {lang === "bn" ? "অভিজাত শপিং গাইড" : "FINE RETAIL HUB"}
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-stone-900 tracking-tight uppercase">
+            <h2 className="text-xl sm:text-2xl font-black text-[#FF6600] tracking-tight uppercase">
               {t.featuredTitle}
             </h2>
-            <p className="text-xs text-stone-500 mt-1 max-w-2xl leading-relaxed">
+            <p className="text-xs text-white mt-1 max-w-2xl leading-relaxed">
               {t.featuredSub}
             </p>
           </div>
           <div className="flex items-center gap-2 self-start md:self-end">
-            <span className="text-xs font-bold text-stone-500 uppercase mr-1">
+            <span className="text-xs font-bold text-white uppercase mr-1">
               {lang === "bn" ? "ক্যাটাগরি ভিউ:" : "Current View:"}
             </span>
             <div className="bg-stone-200 p-0.5 rounded-lg flex gap-1 text-[11px] font-extrabold text-stone-600 shadow-inner">
@@ -2445,7 +2854,7 @@ export default function App() {
         {/* Gallery Title Counter */}
         <div className="flex justify-between items-end mb-6 border-b border-stone-200/60 pb-3">
           <div>
-            <h3 className="text-base sm:text-lg font-black text-stone-900 uppercase tracking-tight flex items-center gap-2">
+            <h3 className="text-base sm:text-lg font-black text-[#FF6600] uppercase tracking-tight flex items-center gap-2">
               {lang === "bn"
                 ? "সুপার স্টোর প্রোডাক্টস গ্যালারি"
                 : "Nusrah Boutique Accessories"}
@@ -2649,6 +3058,156 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* FASHION BLOG MODAL OVERLAY */}
+      {isBlogOpen && (
+        <div id="blog-modal" className="fixed inset-0 bg-stone-900/75 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-4xl h-[85vh] overflow-hidden shadow-2xl relative animate-fade-in flex flex-col border border-stone-200">
+            {/* Modal Header */}
+            <div className="bg-brand-navy p-4 flex justify-between items-center text-white shrink-0">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-brand-gold" />
+                <div>
+                  <h3 className="font-extrabold text-sm sm:text-base uppercase tracking-wider">
+                    {lang === "bn" ? "ফ্যাশন ব্লগ ও লাইফস্টাইল" : "Nusrah Fashion Blog & Lifestyle"}
+                  </h3>
+                  <p className="text-[10px] text-stone-300">
+                    {lang === "bn" ? "নুসরাহ ফ্যাশন হাউজের এক্সক্লুসিভ স্টাইল গাইড ও ট্রেন্ড" : "Discover style trends, guidelines and fashion advice"}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setIsBlogOpen(false);
+                  setSelectedBlogPost(null);
+                }}
+                className="hover:text-brand-gold transition-all duration-200 cursor-pointer text-lg w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center"
+              >
+                ✕
+              </button>
+            </div>
+
+            {selectedBlogPost ? (
+              /* DETAILED ARTICLE READER VIEW */
+              <div className="p-6 overflow-y-auto flex-1 space-y-6">
+                <button
+                  onClick={() => setSelectedBlogPost(null)}
+                  className="bg-stone-100 hover:bg-stone-200 text-stone-700 hover:text-stone-900 text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer w-fit font-bold"
+                >
+                  ← {lang === "bn" ? "ব্লগ তালিকায় ফিরে যান" : "Back to Blog Registry"}
+                </button>
+
+                <div className="space-y-4">
+                  <div className="h-64 sm:h-96 w-full rounded-xl overflow-hidden bg-stone-100 relative">
+                    <img
+                      src={selectedBlogPost.image}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/20 to-transparent" />
+                    <div className="absolute bottom-4 left-4 right-4 text-white">
+                      <span className="bg-amber-500 text-stone-950 text-[9px] font-black uppercase px-2 py-0.5 rounded tracking-widest">
+                        {selectedBlogPost.author}
+                      </span>
+                      <h2 className="text-lg sm:text-2xl font-black mt-2 leading-tight">
+                        {lang === "bn" ? selectedBlogPost.titleBn : selectedBlogPost.titleEn}
+                      </h2>
+                      <p className="text-[11px] text-stone-300 mt-1">
+                        Published: {selectedBlogPost.date}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="prose max-w-none text-stone-800 text-sm sm:text-base leading-relaxed space-y-4 pt-2">
+                    <p className="font-extrabold text-stone-950 text-base border-l-4 border-amber-500 pl-3 italic bg-stone-50 py-2 rounded-r-lg">
+                      {lang === "bn" ? selectedBlogPost.summaryBn : selectedBlogPost.summaryEn}
+                    </p>
+                    <div className="whitespace-pre-line text-stone-700 space-y-2">
+                      {lang === "bn" ? selectedBlogPost.contentBn : selectedBlogPost.contentEn}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* BLOGS GRID INDEX VIEW */
+              <div className="flex-1 overflow-y-auto p-6 flex flex-col space-y-6">
+                {/* Search Bar */}
+                <div className="relative max-w-md w-full mx-auto">
+                  <input
+                    type="text"
+                    placeholder={lang === "bn" ? "নিবন্ধ খুঁজুন..." : "Search articles..."}
+                    className="w-full bg-stone-50 border border-stone-200 rounded-full py-2.5 pl-4 pr-10 text-xs sm:text-sm font-semibold focus:outline-none focus:border-stone-300 focus:ring-2 focus:ring-brand-gold transition-all"
+                    id="blog-search-input"
+                    onChange={(e) => {
+                      // We can live search blog posts
+                      const q = e.target.value.toLowerCase();
+                      const cards = document.querySelectorAll(".blog-card-item");
+                      cards.forEach((card) => {
+                        const title = card.getAttribute("data-title")?.toLowerCase() || "";
+                        const summary = card.getAttribute("data-summary")?.toLowerCase() || "";
+                        if (title.includes(q) || summary.includes(q)) {
+                          (card as HTMLElement).style.display = "flex";
+                        } else {
+                          (card as HTMLElement).style.display = "none";
+                        }
+                      });
+                    }}
+                  />
+                  <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {blogPosts.map((post) => (
+                    <div
+                      key={post.id}
+                      className="blog-card-item bg-white border border-stone-150 rounded-xl overflow-hidden flex flex-col group hover:border-brand-gold/30 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                      data-title={lang === "bn" ? `${post.titleBn} ${post.titleEn}` : `${post.titleEn} ${post.titleBn}`}
+                      data-summary={lang === "bn" ? `${post.summaryBn} ${post.summaryEn}` : `${post.summaryEn} ${post.summaryBn}`}
+                      onClick={() => setSelectedBlogPost(post)}
+                    >
+                      <div className="h-48 bg-stone-100 relative overflow-hidden shrink-0">
+                        <img
+                          src={post.image}
+                          alt=""
+                          className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/20 to-transparent opacity-65" />
+                        <span className="absolute bottom-3 left-3 bg-brand-navy border border-brand-gold/20 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest">
+                          {post.author}
+                        </span>
+                        <span className="absolute bottom-3 right-3 text-[9px] font-bold text-stone-200">
+                          {post.date}
+                        </span>
+                      </div>
+                      <div className="p-4 flex-1 flex flex-col justify-between space-y-4 bg-stone-50/50">
+                        <div className="space-y-1.5">
+                          <h4 className="font-extrabold text-sm sm:text-base text-stone-900 group-hover:text-brand-gold transition-colors leading-snug line-clamp-1">
+                            {lang === "bn" ? post.titleBn : post.titleEn}
+                          </h4>
+                          <p className="text-xs text-stone-500 leading-relaxed line-clamp-2">
+                            {lang === "bn" ? post.summaryBn : post.summaryEn}
+                          </p>
+                        </div>
+                        <button className="text-xs text-brand-gold font-bold hover:underline self-end flex items-center gap-1 cursor-pointer">
+                          <span>{lang === "bn" ? "সম্পূর্ণ পড়ুন" : "Read Full Article"}</span>
+                          <span>➔</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {blogPosts.length === 0 && (
+                    <div className="col-span-full bg-stone-50 border border-stone-200 p-12 rounded-xl text-center text-stone-400 text-xs">
+                      {lang === "bn" ? "কোনো ব্লগ পোস্ট পাওয়া যায়নি।" : "No blog posts published yet."}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 7. AUTHENTICATION & PROFILE MODAL */}
       {isLoginModalOpen && (
@@ -3872,7 +4431,14 @@ export default function App() {
             {/* STEP 1: SHIPPING DETAILS */}
             {checkoutStep === "shipping" && (
               <form
-                onSubmit={() => setCheckoutStep("payment")}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (userPinInput !== securityPin) {
+                    alert(lang === "bn" ? "ভুল সিকিউরিটি কোড! দয়া করে সঠিক ৪-ডিজিটের কোডটি লিখুন।" : "Incorrect verification PIN! Please enter the correct 4-digit code.");
+                    return;
+                  }
+                  setCheckoutStep("payment");
+                }}
                 className="p-6 space-y-4"
               >
                 <h4 className="font-extrabold text-stone-850 text-xs sm:text-sm uppercase tracking-wide border-b border-stone-150 pb-2 flex justify-between items-center">
@@ -4103,6 +4669,41 @@ export default function App() {
                       className="bg-stone-50 border border-stone-200 rounded-lg p-3 w-full focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold focus:outline-none transition-all font-medium"
                     />
                   </div>
+
+                  {/* Fake Order Prevention PIN Validation */}
+                  <div className="bg-amber-500/5 border border-amber-500/15 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-brand-navy font-black uppercase text-[10px] tracking-wider flex items-center gap-1.5">
+                        <span>🔒 {lang === "bn" ? "অর্ডার ভেরিফিকেশন কোড (Fake Order Prevention)" : "Order Verification Security PIN"}</span>
+                      </label>
+                      <span className="text-[11px] bg-amber-500/15 text-amber-700 font-black font-mono px-2.5 py-0.5 rounded tracking-widest animate-pulse select-none border border-amber-500/25">
+                        {securityPin}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-stone-550 font-bold leading-relaxed uppercase">
+                      {lang === "bn"
+                        ? "ভুল অর্ডার প্রতিরোধ করতে এবং দ্রুত বুকিং নিশ্চিত করতে পাশের ৪-ডিজিটের নিরাপত্তা কোডটি হুবহু নিচের বাক্সে লিখুন।"
+                        : "To prevent fraudulent/bot orders, please enter the 4-digit security verification PIN shown on the right."}
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="text"
+                        maxLength={4}
+                        required
+                        placeholder={lang === "bn" ? "যেমন: ৪৩২১" : "e.g. 1234"}
+                        value={userPinInput}
+                        onChange={(e) => setUserPinInput(e.target.value.replace(/\D/g, ''))}
+                        className="bg-white border border-stone-200 rounded-lg px-3 py-2 w-32 font-mono font-black tracking-widest text-center text-xs focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setSecurityPin(Math.floor(1000 + Math.random() * 9000).toString())}
+                        className="text-[10px] font-black text-brand-gold hover:underline uppercase tracking-wider cursor-pointer"
+                      >
+                        🔄 {lang === "bn" ? "নতুন কোড দিন" : "Refresh Code"}
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="pt-4 border-t border-stone-150 flex gap-2">
@@ -4313,32 +4914,6 @@ export default function App() {
                       )}
                     </button>
 
-                    {/* Others bank */}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setPaymentForm({ ...paymentForm, method: "bank" })
-                      }
-                      className={`p-3.5 rounded-xl border-2 flex flex-col items-center justify-center text-center font-bold relative transition-all cursor-pointer ${
-                        paymentForm.method === "bank"
-                          ? "border-indigo-800 bg-indigo-50/70 text-indigo-900 ring-2 ring-indigo-100"
-                          : "border-stone-200 hover:bg-stone-50 text-stone-700"
-                      }`}
-                    >
-                      <span className="block text-[9px] uppercase tracking-wider text-indigo-700 font-extrabold mb-0.5">
-                        Cards & Bank
-                      </span>
-                      <span className="font-black text-xs flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-indigo-850" />
-                        অন্যান্য ব্যাংক (Bank Transfer)
-                      </span>
-                      {paymentForm.method === "bank" && (
-                        <span className="absolute top-1.5 right-1.5 bg-indigo-900 text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold">
-                          ✓
-                        </span>
-                      )}
-                    </button>
-
                     {/* COD */}
                     <button
                       type="button"
@@ -4543,115 +5118,7 @@ export default function App() {
                     </div>
                   )}
 
-                  {/* Bank / Card Transfer */}
-                  {paymentForm.method === "bank" && (
-                    <div className="bg-stone-50 rounded-lg p-3 border border-stone-200 space-y-2.5 animate-fade-in text-stone-850">
-                      <div>
-                        <label className="block text-[10px] text-stone-555 font-bold mb-1">
-                          {lang === "bn"
-                            ? "ব্যাংক নির্বাচন করুন"
-                            : "Select Authorized Bangladesh Bank"}
-                        </label>
-                        <select
-                          value={paymentForm.selectedBank}
-                          onChange={(e) =>
-                            setPaymentForm({
-                              ...paymentForm,
-                              selectedBank: e.target.value,
-                            })
-                          }
-                          className="bg-white border border-stone-200 rounded-lg px-2.5 py-1.5 w-full text-xs font-semibold focus:ring-2 focus:ring-rose-500/10 focus:outline-none focus:border-rose-500"
-                        >
-                          <option value="Dutch-Bangla Bank (DBBL)">
-                            Dutch-Bangla Bank (DBBL)
-                          </option>
-                          <option value="The City Bank">
-                            The City Bank Ltd
-                          </option>
-                          <option value="BRAC Bank">BRAC Bank PLC</option>
-                          <option value="Eastern Bank (EBL)">
-                            Eastern Bank PLC (EBL)
-                          </option>
-                          <option value="Mutual Trust Bank (MTB)">
-                            Mutual Trust Bank (MTB)
-                          </option>
-                          <option value="Sonali Bank">Sonali Bank PLC</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-stone-555 font-bold mb-1">
-                          Holder Name
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={paymentForm.cardName}
-                          onChange={(e) =>
-                            setPaymentForm({
-                              ...paymentForm,
-                              cardName: e.target.value,
-                            })
-                          }
-                          className="bg-white border border-stone-200 rounded-lg px-2.5 py-1.5 w-full font-bold uppercase text-xs"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-stone-555 font-bold mb-1">
-                          Card / Account Number
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={paymentForm.cardNumber}
-                          onChange={(e) =>
-                            setPaymentForm({
-                              ...paymentForm,
-                              cardNumber: e.target.value,
-                            })
-                          }
-                          className="bg-white border border-stone-200 rounded-lg px-2.5 py-1.5 w-full font-mono text-xs"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="block text-[10px] text-stone-555 font-bold mb-1">
-                            Expiry Date
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="MM/YY"
-                            value={paymentForm.cardExpiry}
-                            onChange={(e) =>
-                              setPaymentForm({
-                                ...paymentForm,
-                                cardExpiry: e.target.value,
-                              })
-                            }
-                            className="bg-white border border-stone-200 rounded-lg px-2.5 py-1.5 w-full text-center font-mono text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] text-stone-555 font-bold mb-1">
-                            CVV/CVN
-                          </label>
-                          <input
-                            type="password"
-                            required
-                            placeholder="•••"
-                            value={paymentForm.cardCvv}
-                            onChange={(e) =>
-                              setPaymentForm({
-                                ...paymentForm,
-                                cardCvv: e.target.value,
-                              })
-                            }
-                            className="bg-white border border-stone-200 rounded-lg px-2.5 py-1.5 w-full text-center font-mono text-xs"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
+
 
                   {/* Cash on delivery notice */}
                   {paymentForm.method === "cod" && (
@@ -4883,6 +5350,13 @@ export default function App() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() => handlePrintInvoice(activeReceipt)}
+                    className="flex-1 bg-stone-900 hover:bg-stone-850 text-white font-black py-4 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 active:translate-y-0 text-sm uppercase tracking-widest flex items-center justify-center gap-2 cursor-pointer border border-stone-800"
+                  >
+                    <Printer className="w-5 h-5 text-brand-gold animate-bounce-short" />
+                    {lang === "bn" ? "চালান ডাউনলোড করুন" : "Download Invoice"}
+                  </button>
                   <button
                     onClick={() => {
                       setCheckoutStep("none");
@@ -7109,30 +7583,51 @@ export default function App() {
       {/* 11. FOOTER BRAND STATEMENT */}
       <footer
         id="retail-footer"
-        className="bg-stone-900 border-t border-stone-800 text-stone-400 py-10 px-4 sm:px-8"
+        className="border-t border-stone-800 py-10 px-4 sm:px-8 relative overflow-hidden transition-all duration-300"
+        style={{
+          backgroundColor: shopConfig.footerBgColor || '#1c1917',
+          color: shopConfig.footerTextColor || '#a8a29e',
+          fontFamily: shopConfig.footerFontFamily === 'serif' ? '"Playfair Display", serif' :
+                      shopConfig.footerFontFamily === 'space' ? '"Space Grotesk", sans-serif' :
+                      shopConfig.footerFontFamily === 'mono' ? '"JetBrains Mono", monospace' :
+                      shopConfig.footerFontFamily === 'cursive' ? '"Caveat", cursive' :
+                      shopConfig.footerFontFamily === 'bengali' ? '"Noto Serif Bengali", serif' :
+                      'inherit',
+          fontSize: shopConfig.footerFontSize || '100%',
+        }}
       >
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-xs">
+        {/* Footer Background Image overlay */}
+        {shopConfig.footerBgImageUrl && (
+          <div
+            className="absolute inset-0 bg-cover bg-center pointer-events-none transition-all duration-300"
+            style={{
+              backgroundImage: `url(${shopConfig.footerBgImageUrl})`,
+              opacity: (Number(shopConfig.footerBgOpacity ?? 100) / 100),
+            }}
+          />
+        )}
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-xs relative z-10">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-white content-center border border-stone-800 overflow-hidden flex items-center justify-center">
                 <img
-                  src={nusrahLogo}
+                  src={shopConfig.footerLogoUrl || shopConfig.logoUrl || nusrahLogo}
                   alt="Nusrah Apparel Footer Logo"
                   className="w-full h-full object-cover scale-105"
                   referrerPolicy="no-referrer"
                 />
               </div>
-              <span className="text-white font-black uppercase text-sm sm:text-base tracking-widest leading-none">
-                {lang === "bn" ? "নুসরাহ অ্যাপারেলস" : "NUSRAH APPAREL"}
+              <span className="font-black uppercase text-sm sm:text-base tracking-widest leading-none" style={{ color: shopConfig.footerTitleColor || '#f5f5f4' }}>
+                {lang === "bn" ? (shopConfig.name || "নুসরাহ অ্যাপারেলস") : (shopConfig.name?.toUpperCase() || "NUSRAH APPAREL")}
               </span>
             </div>
-            <p className="text-[11px] sm:text-xs text-stone-400 leading-relaxed max-w-xs">
+            <p className="text-[11px] sm:text-xs leading-relaxed max-w-xs" style={{ color: shopConfig.footerTextColor || '#FFFFFF' }}>
               {lang === "bn" ? shopConfig.footerBioBn : shopConfig.footerBioEn}
             </p>
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-extrabold uppercase text-stone-200 tracking-wider text-[11px] sm:text-xs">
+            <h4 className="font-extrabold uppercase tracking-wider text-[11px] sm:text-xs" style={{ color: shopConfig.footerTitleColor || '#f5f5f4' }}>
               {lang === "bn" ? "অফিসিয়াল অবস্থান" : "Official Address"}
             </h4>
             <div className="space-y-1.5 text-[11px] sm:text-xs">
@@ -7172,6 +7667,7 @@ export default function App() {
                 >
                   YouTube Channel
                 </a>
+
                 <a
                   href={shopConfig.instagramLink}
                   target="_blank"
@@ -7185,24 +7681,24 @@ export default function App() {
           </div>
 
           <div className="space-y-3">
-            <h4 className="font-extrabold uppercase text-stone-200 tracking-wider text-[11px] sm:text-xs">
+            <h4 className="font-extrabold uppercase tracking-wider text-[11px] sm:text-xs" style={{ color: shopConfig.footerTitleColor || '#f5f5f4' }}>
               {lang === "bn"
                 ? "পার্টনারশিপ ও সিকিউরিটি"
                 : "Partnership & Security"}
             </h4>
-            <p className="text-[11px] text-stone-500 leading-relaxed max-w-xs">
+            <p className="text-[11px] text-white leading-relaxed max-w-xs">
               {lang === "bn"
                 ? "বিকাশ, নগদ, ভিসা সহ সকল বিশ্বমানের ও স্থানীয় ট্রাস্ট এগ্রিমেন্ট পার্টনার দ্বারা সিকিউরড।"
                 : "Encrypted with SSL, partner certifications with high safety, direct COD capability, or Instant mobile settlement chains."}
             </p>
             {/* Visual logos */}
-            <div className="flex flex-wrap gap-2.5 items-center bg-stone-905 p-3 rounded-lg border border-stone-800/80 w-fit">
+            <div className="flex flex-wrap gap-2.5 items-center bg-white/10 p-3 rounded-lg border border-white/20 w-fit">
               <div className="group relative">
-                <span className="text-[9px] font-black tracking-widest text-[#d946ef] bg-[#d946ef]/10 px-2 py-1 rounded cursor-help">
+                <span className="text-[9px] font-black tracking-widest text-white bg-white/20 px-2 py-1 rounded cursor-help">
                   bKash
                 </span>
-                <div className="absolute bottom-full left-0 mb-2 invisible group-hover:visible bg-stone-800 text-white p-2 rounded shadow-xl border border-stone-700 min-w-[120px] z-50">
-                  <p className="text-[8px] font-bold text-stone-400 mb-1 uppercase tracking-tighter">
+                <div className="absolute bottom-full left-0 mb-2 invisible group-hover:visible bg-white text-black p-2 rounded shadow-xl border border-stone-200 min-w-[120px] z-50">
+                  <p className="text-[8px] font-bold text-stone-500 mb-1 uppercase tracking-tighter">
                     bKash Numbers:
                   </p>
                   {shopConfig.bkashNumbers.map(
@@ -7216,11 +7712,11 @@ export default function App() {
                 </div>
               </div>
               <div className="group relative">
-                <span className="text-[9px] font-black tracking-widest text-[#f97316] bg-[#f97316]/10 px-2 py-1 rounded cursor-help">
+                <span className="text-[9px] font-black tracking-widest text-white bg-white/20 px-2 py-1 rounded cursor-help">
                   Nagad
                 </span>
-                <div className="absolute bottom-full left-0 mb-2 invisible group-hover:visible bg-stone-800 text-white p-2 rounded shadow-xl border border-stone-700 min-w-[120px] z-50">
-                  <p className="text-[8px] font-bold text-stone-400 mb-1 uppercase tracking-tighter">
+                <div className="absolute bottom-full left-0 mb-2 invisible group-hover:visible bg-white text-black p-2 rounded shadow-xl border border-stone-200 min-w-[120px] z-50">
+                  <p className="text-[8px] font-bold text-stone-500 mb-1 uppercase tracking-tighter">
                     Nagad Numbers:
                   </p>
                   {shopConfig.nagadNumbers.map(
@@ -7234,11 +7730,11 @@ export default function App() {
                 </div>
               </div>
               <div className="group relative">
-                <span className="text-[9px] font-black tracking-widest text-purple-400 bg-purple-400/10 px-2 py-1 rounded cursor-help">
+                <span className="text-[9px] font-black tracking-widest text-white bg-white/20 px-2 py-1 rounded cursor-help">
                   Rocket
                 </span>
-                <div className="absolute bottom-full left-0 mb-2 invisible group-hover:visible bg-stone-800 text-white p-2 rounded shadow-xl border border-stone-700 min-w-[120px] z-50">
-                  <p className="text-[8px] font-bold text-stone-400 mb-1 uppercase tracking-tighter">
+                <div className="absolute bottom-full left-0 mb-2 invisible group-hover:visible bg-white text-black p-2 rounded shadow-xl border border-stone-200 min-w-[120px] z-50">
+                  <p className="text-[8px] font-bold text-stone-500 mb-1 uppercase tracking-tighter">
                     Rocket Numbers:
                   </p>
                   {shopConfig.rocketNumbers.map(
@@ -7251,14 +7747,14 @@ export default function App() {
                   )}
                 </div>
               </div>
-              <span className="text-[9px] font-black tracking-widest text-stone-200 bg-stone-100/10 px-2.5 py-1 rounded">
+              <span className="text-[9px] font-black tracking-widest text-white bg-white/20 px-2.5 py-1 rounded">
                 COD
               </span>
             </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto border-t border-stone-800/85 mt-8 pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between text-[11px] text-stone-500 gap-2.5">
+        <div className="max-w-7xl mx-auto border-t border-white/20 mt-8 pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between text-[11px] text-white gap-2.5">
           <p>
             © {new Date().getFullYear()} Nusrah Apparel. All Rights Reserved.
             Engineered with precision.
@@ -7266,19 +7762,15 @@ export default function App() {
           <div className="flex items-center gap-4">
             <a
               href="#nusrah-system-gate"
-              className="hover:text-amber-500 transition-all cursor-pointer"
+              className="text-[#FF6600] font-black text-xs hover:text-white transition-all cursor-pointer"
             >
               Admin
             </a>
-            <p className="flex items-center gap-2">
-              <span>Powered by</span>
-              <span className="text-white font-black text-rose-500">
-                VELOCITYTECH
-              </span>
-            </p>
           </div>
         </div>
       </footer>
+      </div>
+      </div>
     </div>
   );
 }

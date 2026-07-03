@@ -22,7 +22,9 @@ import {
   SlidersHorizontal,
   ChevronDown,
   AlertCircle,
-  Globe
+  Globe,
+  BookOpen,
+  Newspaper
 } from 'lucide-react';
 import { Product, Review } from '../types';
 import { CATEGORIES } from '../data';
@@ -46,6 +48,8 @@ interface AdminGateProps {
   adminToken: string;
   setAdminToken: (token: string) => void;
   formatPrice: (price: number) => string;
+  blogPosts: any[];
+  setBlogPosts: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
 const compressImageFile = (file: File, callback: (resizedBase64: string) => void) => {
@@ -102,7 +106,9 @@ export default function AdminGate({
   setAdminToken,
   formatPrice,
   leadership,
-  setLeadership
+  setLeadership,
+  blogPosts,
+  setBlogPosts
 }: AdminGateProps) {
   // Authentication local states
   const [username, setUsername] = useState('');
@@ -112,7 +118,21 @@ export default function AdminGate({
   const [isLocked, setIsLocked] = useState(false);
 
   // Active workspace state
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'orders' | 'configs' | 'analytics'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'orders' | 'configs' | 'analytics' | 'blog'>('dashboard');
+
+  // Blog management states
+  const [isAddingBlog, setIsAddingBlog] = useState(false);
+  const [blogForm, setBlogForm] = useState({
+    titleEn: '',
+    titleBn: '',
+    author: '',
+    image: '',
+    summaryEn: '',
+    summaryBn: '',
+    contentEn: '',
+    contentBn: ''
+  });
+  const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
 
   // Product manager filter/search states
   const [prodSearch, setProdSearch] = useState('');
@@ -335,9 +355,11 @@ export default function AdminGate({
     setProducts(prev =>
       prev.map(p => {
         if (p.id === editingProduct?.id) {
+          const finalImages = (editProductForm.images || []).filter(img => img && img.trim() !== '');
           return {
             ...p,
             ...editProductForm,
+            images: finalImages.length > 0 ? finalImages : p.images,
             price: Number(editProductForm.price),
             originalPrice: editProductForm.originalPrice ? Number(editProductForm.originalPrice) : undefined,
             stock: Number(editProductForm.stock)
@@ -515,11 +537,11 @@ export default function AdminGate({
 
   // AUTHENTICATED PANEL WORKFLOW
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col">
+    <div className="min-h-screen bg-[#FF6600] text-white flex flex-col">
       {/* 1. TOP HEADER BRAND PANEL */}
-      <header className="h-16 bg-stone-900 border-b border-stone-850 flex items-center justify-between px-4 sm:px-8">
+      <header className="h-16 bg-[#FF6600] border-b border-white flex items-center justify-between px-4 sm:px-8">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-white overflow-hidden border border-stone-800">
+          <div className="w-9 h-9 rounded-full bg-white overflow-hidden border border-white">
             <img
               src={nusrahLogo}
               alt="Logo"
@@ -528,10 +550,10 @@ export default function AdminGate({
             />
           </div>
           <div>
-            <h1 className="text-sm font-black tracking-tight text-white uppercase leading-none">
+            <h1 className="text-sm font-black tracking-tight text-black uppercase leading-none">
               {lang === 'bn' ? 'নুসরাহ অ্যাপারেলস' : 'Nusrah Apparel'}
             </h1>
-            <span className="text-[9px] font-black tracking-widest text-amber-500 uppercase">
+            <span className="text-[9px] font-black tracking-widest text-black uppercase">
               {lang === 'bn' ? 'সিকিউর ম্যানেজমেন্ট ড্যাশবোর্ড' : 'Secure Admin Authority'}
             </span>
           </div>
@@ -540,14 +562,14 @@ export default function AdminGate({
         <div className="flex items-center gap-3">
           <button
             onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')}
-            className="bg-stone-850 border border-stone-800 hover:border-amber-500 text-stone-400 hover:text-amber-500 rounded px-2 py-1 text-[10px] font-black transition-all cursor-pointer"
+            className="bg-[#FF6600] border border-white hover:border-white text-white hover:text-white rounded px-2 py-1 text-[10px] font-black transition-all cursor-pointer"
           >
             {lang === 'bn' ? 'ENGLISH MODE' : 'বাংলা সংস্করণ'}
           </button>
           
           <button
             onClick={handleReturnToStorefront}
-            className="hidden sm:flex text-stone-400 hover:text-white items-center gap-1.5 text-xs font-extrabold pr-3 border-r border-stone-800"
+            className="hidden sm:flex text-white hover:text-white items-center gap-1.5 text-xs font-extrabold pr-3 border-r border-white"
           >
             <Globe className="w-3.5 h-3.5" />
             <span>{lang === 'bn' ? 'স্টোরে প্রবেশ করুন' : 'View Storefront'}</span>
@@ -555,7 +577,7 @@ export default function AdminGate({
 
           <button
             onClick={handleSystemLogout}
-            className="text-stone-400 hover:text-rose-500 flex items-center gap-1 text-xs font-black"
+            className="text-white hover:text-rose-200 flex items-center gap-1 text-xs font-black"
           >
             <LogOut className="w-4 h-4" />
             <span className="hidden md:inline">{lang === 'bn' ? 'লগআউট' : 'Sign Out'}</span>
@@ -575,7 +597,7 @@ export default function AdminGate({
                   <Package className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black uppercase text-white tracking-widest">{lang === 'bn' ? 'অর্ডার বিস্তারিত' : 'Order Specification'}</h3>
+                  <h3 className="text-sm font-black uppercase text-black tracking-widest">{lang === 'bn' ? 'অর্ডার বিস্তারিত' : 'Order Specification'}</h3>
                   <p className="text-[10px] font-mono text-amber-500 font-bold uppercase tracking-widest">{selectedAdminOrder.orderId}</p>
                 </div>
               </div>
@@ -772,7 +794,7 @@ export default function AdminGate({
             <Settings className="w-4 h-4" />
             <span>{lang === 'bn' ? 'ওয়েবসাইট CMS কনফিগ' : 'Site Configuration'}</span>
           </button>
-          
+
           <button
             onClick={handleReturnToStorefront}
             className="flex items-center gap-2.5 px-4 py-3 rounded-lg text-xs font-black tracking-wider uppercase transition-all w-full flex-shrink-0 cursor-pointer text-amber-500 hover:bg-stone-850 hover:text-white"
@@ -816,7 +838,7 @@ export default function AdminGate({
 
               {/* QUICK CONTROL ACTIONS */}
               <div className="bg-stone-900 border border-amber-950/20 rounded-xl p-5 space-y-4">
-                <h3 className="text-sm font-extrabold uppercase text-amber-500 tracking-wider">Quick Actions Portal</h3>
+                <h3 className="text-sm font-extrabold uppercase text-black tracking-wider">Quick Actions Portal</h3>
                 <div className="flex flex-wrap gap-3">
                   <button
                     onClick={() => { setActiveTab('products'); setIsAddModalOpen(true); }}
@@ -1414,6 +1436,62 @@ export default function AdminGate({
               </div>
 
               <form onSubmit={handleSaveConfigs} className="bg-stone-900 border border-stone-850 rounded-xl p-5 sm:p-6 space-y-4 text-xs">
+                
+                {/* Brand Identity Branding Header (Name & Logo Upload) */}
+                <div className="bg-stone-950 p-4 rounded-lg border border-stone-850 space-y-3">
+                  <h3 className="text-sm font-black text-black uppercase tracking-wider">Brand Logo & Boutique Identity</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black uppercase text-stone-450 tracking-wider block">Custom Brand Store Name</label>
+                      <input
+                        type="text"
+                        value={configForm.name || "Nusrah Apparel"}
+                        onChange={(e) => setConfigForm({...configForm, name: e.target.value})}
+                        className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 focus:ring-1 focus:ring-amber-500 font-extrabold text-sm text-brand-gold"
+                        placeholder="e.g. Nusrah Apparel"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase text-stone-450 tracking-wider block">Upload Brand Boutique Logo</label>
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full border border-stone-700 bg-stone-900 overflow-hidden flex items-center justify-center shrink-0">
+                          <img
+                            src={configForm.logoUrl || nusrahLogo}
+                            alt="Logo preview"
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex gap-2">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  compressImageFile(file, (resized) => {
+                                    setConfigForm({...configForm, logoUrl: resized});
+                                  });
+                                }
+                              }}
+                              className="w-full bg-stone-850 border border-stone-800 rounded p-1 text-[11px] text-stone-300"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setConfigForm({...configForm, logoUrl: ''})}
+                              className="bg-stone-700 text-stone-300 px-3 py-1 rounded text-[10px] hover:bg-stone-600"
+                            >
+                              Reset
+                            </button>
+                          </div>
+                          <p className="text-[9px] text-stone-550 mt-1">Select a square logo image. Auto-compressed client-side for fast loading.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   
                   <div className="space-y-1">
@@ -1447,7 +1525,7 @@ export default function AdminGate({
                   </div>
 
                   <div className="space-y-4 md:col-span-2 border-t border-stone-800 pt-4 mt-4">
-                    <h3 className="text-sm font-black text-amber-500 uppercase tracking-wider mb-4">Payment Numbers Management</h3>
+                    <h3 className="text-sm font-black text-black uppercase tracking-wider mb-4">Payment Numbers Management</h3>
                     
                     {/* bKash */}
                     <div className="space-y-2">
@@ -1566,6 +1644,780 @@ export default function AdminGate({
                     </div>
                   </div>
 
+                  {/* WEBSITE BRANDING & GLOBAL STYLING CUSTOMIZATION (NEW) */}
+                  <div className="md:col-span-2 mt-6 pt-6 border-t border-stone-800">
+                    <div className="flex items-center gap-2 mb-4">
+                      <SlidersHorizontal className="w-4 h-4 text-amber-500 animate-pulse" />
+                      <h3 className="text-sm font-black text-amber-500 uppercase tracking-wider">
+                        {lang === "bn" ? "ওয়েবসাইট থিম এবং ব্র্যান্ডিং কাস্টমাইজেশন" : "Website Theme & Branding Customization"}
+                      </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-stone-900/60 p-4 rounded-xl border border-stone-800/80">
+                      
+                      {/* Background Color Picker */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ব্যাকগ্রাউন্ড কালার (Background Color)" : "Background Color"}
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            value={configForm.themeBgColor || '#fafaf9'}
+                            onChange={(e) => setConfigForm({...configForm, themeBgColor: e.target.value})}
+                            className="w-10 h-9 bg-stone-850 border border-stone-800 rounded cursor-pointer p-0.5"
+                          />
+                          <input
+                            type="text"
+                            value={configForm.themeBgColor || '#fafaf9'}
+                            onChange={(e) => setConfigForm({...configForm, themeBgColor: e.target.value})}
+                            className="flex-1 bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-1.5 font-mono text-xs"
+                            placeholder="#fafaf9"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Text/Font Color Picker */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "টেক্সট কালার (Text/Font Color)" : "Text/Font Color"}
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            value={configForm.themeTextColor || '#1c1917'}
+                            onChange={(e) => setConfigForm({...configForm, themeTextColor: e.target.value})}
+                            className="w-10 h-9 bg-stone-850 border border-stone-800 rounded cursor-pointer p-0.5"
+                          />
+                          <input
+                            type="text"
+                            value={configForm.themeTextColor || '#1c1917'}
+                            onChange={(e) => setConfigForm({...configForm, themeTextColor: e.target.value})}
+                            className="flex-1 bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-1.5 font-mono text-xs"
+                            placeholder="#1c1917"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Base Font Size Modifier */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ফন্ট সাইজ (Font Size)" : "Base Font Size"}
+                        </label>
+                        <select
+                          value={configForm.themeFontSize || '100%'}
+                          onChange={(e) => setConfigForm({...configForm, themeFontSize: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-sans text-xs cursor-pointer"
+                        >
+                          <option value="90%">{lang === "bn" ? "ছোট (90%)" : "Small (90%)"}</option>
+                          <option value="95%">{lang === "bn" ? "মাঝারি-ছোট (95%)" : "Medium-Small (95%)"}</option>
+                          <option value="100%">{lang === "bn" ? "স্বাভাবিক (100%)" : "Normal (100%)"}</option>
+                          <option value="105%">{lang === "bn" ? "মাঝারি-বড় (105%)" : "Medium-Large (105%)"}</option>
+                          <option value="110%">{lang === "bn" ? "বড় (110%)" : "Large (110%)"}</option>
+                          <option value="115%">{lang === "bn" ? "অতিরিক্ত বড় (115%)" : "Extra Large (115%)"}</option>
+                          <option value="120%">{lang === "bn" ? "মহা বড় (120%)" : "Huge (120%)"}</option>
+                        </select>
+                      </div>
+
+                      {/* Font Family Selection */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ফন্ট স্টাইল / লেখার ধরন" : "Writing Style (Font)"}
+                        </label>
+                        <select
+                          value={configForm.themeFontFamily || 'sans'}
+                          onChange={(e) => setConfigForm({...configForm, themeFontFamily: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-sans text-xs cursor-pointer"
+                        >
+                          <option value="sans">Inter (Modern & Clean)</option>
+                          <option value="serif">Playfair Display (Elegant Luxury)</option>
+                          <option value="space">Space Grotesk (Tech/Futuristic)</option>
+                          <option value="mono">JetBrains Mono (Digital Developer)</option>
+                          <option value="cursive">Caveat (Creative/Boutique)</option>
+                          <option value="bengali">Noto Serif Bengali (Traditional Elegant)</option>
+                        </select>
+                      </div>
+
+                      {/* Background Pattern/Image URL */}
+                      <div className="space-y-1 md:col-span-2">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ব্যাকগ্রাউন্ড পিকচার লিঙ্ক (Image URL)" : "Background Picture Image URL"}
+                        </label>
+                        <input
+                          type="text"
+                          value={configForm.themeBgImageUrl || ''}
+                          onChange={(e) => setConfigForm({...configForm, themeBgImageUrl: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-mono text-xs"
+                          placeholder="https://images.unsplash.com/... or leave empty"
+                        />
+                      </div>
+
+                      {/* Background Image Opacity Overlay */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ব্যাকগ্রাউন্ড ছবি ও কালারের অপাসিটি" : "Background Overlay Opacity"}
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={configForm.themeBgOpacity || '94'}
+                            onChange={(e) => setConfigForm({...configForm, themeBgOpacity: e.target.value})}
+                            className="flex-1 accent-amber-500 animate-none cursor-pointer"
+                          />
+                          <span className="text-xs font-mono font-bold text-amber-500 shrink-0 w-8 text-right">
+                            {configForm.themeBgOpacity || '94'}%
+                          </span>
+                        </div>
+                      </div>
+                      
+                    </div>
+                  </div>
+
+                  {/* HERO SECTION BANNER CUSTOMIZATION (NEW) */}
+                  <div className="md:col-span-2 mt-6 pt-6 border-t border-stone-800">
+                    <div className="flex items-center gap-2 mb-4">
+                      <SlidersHorizontal className="w-4 h-4 text-amber-500 animate-pulse" />
+                      <h3 className="text-sm font-black text-amber-500 uppercase tracking-wider">
+                        {lang === "bn" ? "হিরো ব্যানার ও 'সেরা অফার' ব্যাজ কাস্টমাইজেশন" : "Hero Banner & 'Best Offer' Badge Customization"}
+                      </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-stone-900/60 p-4 rounded-xl border border-stone-800/80">
+                      
+                      {/* Badge Text BN */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ব্যাজ টেক্সট (বাংলা)" : "Badge Text (Bangla)"}
+                        </label>
+                        <input
+                          type="text"
+                          value={configForm.heroBadgeTextBn || ''}
+                          onChange={(e) => setConfigForm({...configForm, heroBadgeTextBn: e.target.value})}
+                          placeholder="সকাল এর জন্য সেরা অফার"
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-sans text-xs"
+                        />
+                      </div>
+
+                      {/* Badge Text EN */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ব্যাজ টেক্সট (ইংরেজি)" : "Badge Text (English)"}
+                        </label>
+                        <input
+                          type="text"
+                          value={configForm.heroBadgeTextEn || ''}
+                          onChange={(e) => setConfigForm({...configForm, heroBadgeTextEn: e.target.value})}
+                          placeholder="🔥 EXCLUSIVE PREMIUM HIT"
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-sans text-xs"
+                        />
+                      </div>
+
+                      {/* Badge Bg Color */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ব্যাজ ব্যাকগ্রাউন্ড কালার" : "Badge Background Color"}
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            value={configForm.heroBadgeBgColor || '#fbbf24'}
+                            onChange={(e) => setConfigForm({...configForm, heroBadgeBgColor: e.target.value})}
+                            className="w-10 h-9 bg-stone-850 border border-stone-800 rounded cursor-pointer p-0.5"
+                          />
+                          <input
+                            type="text"
+                            value={configForm.heroBadgeBgColor || '#fbbf24'}
+                            onChange={(e) => setConfigForm({...configForm, heroBadgeBgColor: e.target.value})}
+                            className="flex-1 bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-1.5 font-mono text-xs"
+                            placeholder="#fbbf24"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Badge Text Color */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ব্যাজ টেক্সট কালার" : "Badge Text Color"}
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            value={configForm.heroBadgeTextColor || '#1c1917'}
+                            onChange={(e) => setConfigForm({...configForm, heroBadgeTextColor: e.target.value})}
+                            className="w-10 h-9 bg-stone-850 border border-stone-800 rounded cursor-pointer p-0.5"
+                          />
+                          <input
+                            type="text"
+                            value={configForm.heroBadgeTextColor || '#1c1917'}
+                            onChange={(e) => setConfigForm({...configForm, heroBadgeTextColor: e.target.value})}
+                            className="flex-1 bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-1.5 font-mono text-xs"
+                            placeholder="#1c1917"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Hero Section Background Color */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "হিরো ব্যাকগ্রাউন্ড কালার" : "Hero Section Background Color"}
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            value={configForm.heroBgColor || '#1c1917'}
+                            onChange={(e) => setConfigForm({...configForm, heroBgColor: e.target.value})}
+                            className="w-10 h-9 bg-stone-850 border border-stone-800 rounded cursor-pointer p-0.5"
+                          />
+                          <input
+                            type="text"
+                            value={configForm.heroBgColor || '#1c1917'}
+                            onChange={(e) => setConfigForm({...configForm, heroBgColor: e.target.value})}
+                            className="flex-1 bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-1.5 font-mono text-xs"
+                            placeholder="#1c1917"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Hero Section Text Color */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "হিরো টেক্সট কালার" : "Hero Section Text Color"}
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            value={configForm.heroTextColor || '#f5f5f4'}
+                            onChange={(e) => setConfigForm({...configForm, heroTextColor: e.target.value})}
+                            className="w-10 h-9 bg-stone-850 border border-stone-800 rounded cursor-pointer p-0.5"
+                          />
+                          <input
+                            type="text"
+                            value={configForm.heroTextColor || '#f5f5f4'}
+                            onChange={(e) => setConfigForm({...configForm, heroTextColor: e.target.value})}
+                            className="flex-1 bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-1.5 font-mono text-xs"
+                            placeholder="#f5f5f4"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Hero Background Image URL */}
+                      <div className="space-y-1 md:col-span-2">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "হিরো ব্যাকগ্রাউন্ড ছবি লিঙ্ক (Image URL)" : "Hero Background Image URL"}
+                        </label>
+                        <input
+                          type="text"
+                          value={configForm.heroBgImageUrl || ''}
+                          onChange={(e) => setConfigForm({...configForm, heroBgImageUrl: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-mono text-xs"
+                          placeholder="https://images.unsplash.com/... or leave empty"
+                        />
+                      </div>
+
+                      {/* Hero Background Image FILE Upload */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ছবি আপলোড করুন (File Upload)" : "Upload Background File"}
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              compressImageFile(file, (resized) => {
+                                setConfigForm({...configForm, heroBgImageUrl: resized});
+                              });
+                            }
+                          }}
+                          className="w-full bg-stone-850 border border-stone-800 rounded p-1 text-[11px] text-stone-300 cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Hero Section Font Family Selection */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "হিরো সেকশন ফন্ট স্টাইল" : "Hero Font Family"}
+                        </label>
+                        <select
+                          value={configForm.heroFontFamily || 'sans'}
+                          onChange={(e) => setConfigForm({...configForm, heroFontFamily: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-sans text-xs cursor-pointer"
+                        >
+                          <option value="sans">Inter (Modern & Clean)</option>
+                          <option value="serif">Playfair Display (Elegant Luxury)</option>
+                          <option value="space">Space Grotesk (Tech/Futuristic)</option>
+                          <option value="mono">JetBrains Mono (Digital Developer)</option>
+                          <option value="cursive">Caveat (Creative/Boutique)</option>
+                          <option value="bengali">Noto Serif Bengali (Traditional Elegant)</option>
+                        </select>
+                      </div>
+
+                      {/* Hero Section Base Font Size */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "হিরো সেকশন ফন্ট সাইজ" : "Hero Base Font Size"}
+                        </label>
+                        <select
+                          value={configForm.heroFontSize || '100%'}
+                          onChange={(e) => setConfigForm({...configForm, heroFontSize: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-sans text-xs cursor-pointer"
+                        >
+                          <option value="90%">Small (90%)</option>
+                          <option value="95%">Medium-Small (95%)</option>
+                          <option value="100%">Normal (100%)</option>
+                          <option value="105%">Medium-Large (105%)</option>
+                          <option value="110%">Large (110%)</option>
+                          <option value="115%">Extra Large (115%)</option>
+                          <option value="120%">Huge (120%)</option>
+                        </select>
+                      </div>
+
+                      {/* Hero Background Image Opacity Overlay */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "হিরো ব্যাকগ্রাউন্ড ছবি অপাসিটি" : "Hero Background Overlay Opacity"}
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={configForm.heroBgOpacity || '10'}
+                            onChange={(e) => setConfigForm({...configForm, heroBgOpacity: e.target.value})}
+                            className="flex-1 accent-amber-500 animate-none cursor-pointer"
+                          />
+                          <span className="text-xs font-mono font-bold text-amber-500 shrink-0 w-8 text-right">
+                            {configForm.heroBgOpacity || '10'}%
+                          </span>
+                        </div>
+                      </div>
+                      
+                    </div>
+                  </div>
+
+                  {/* RESPONSIVE DEVICE PREVIEWER CUSTOMIZATION (NEW) */}
+                  <div className="md:col-span-2 mt-6 pt-6 border-t border-stone-800">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Smartphone className="w-4 h-4 text-amber-500 animate-pulse" />
+                      <h3 className="text-sm font-black text-amber-500 uppercase tracking-wider">
+                        {lang === "bn" ? "রেসপনসিভ ডিভাইস প্রিভিউয়ার কাস্টমাইজেশন" : "Responsive Device Previewer Customization"}
+                      </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-stone-900/60 p-4 rounded-xl border border-stone-800/80">
+                      
+                      {/* Title BN */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "শিরোনাম (বাংলা)" : "Previewer Title (Bangla)"}
+                        </label>
+                        <input
+                          type="text"
+                          value={configForm.previewerTitleBn || ''}
+                          onChange={(e) => setConfigForm({...configForm, previewerTitleBn: e.target.value})}
+                          placeholder="রেসপনসিভ ডিভাইস প্রিভিউয়ার"
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-sans text-xs"
+                        />
+                      </div>
+
+                      {/* Title EN */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "শিরোনাম (ইংরেজি)" : "Previewer Title (English)"}
+                        </label>
+                        <input
+                          type="text"
+                          value={configForm.previewerTitleEn || ''}
+                          onChange={(e) => setConfigForm({...configForm, previewerTitleEn: e.target.value})}
+                          placeholder="Responsive Device Previewer"
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-sans text-xs"
+                        />
+                      </div>
+
+                      {/* Previewer BG Color */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "প্রিভিউয়ার ব্যাকগ্রাউন্ড কালার" : "Previewer Background Color"}
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            value={configForm.previewerBgColor || '#1c1917'}
+                            onChange={(e) => setConfigForm({...configForm, previewerBgColor: e.target.value})}
+                            className="w-10 h-9 bg-stone-850 border border-stone-800 rounded cursor-pointer p-0.5"
+                          />
+                          <input
+                            type="text"
+                            value={configForm.previewerBgColor || '#1c1917'}
+                            onChange={(e) => setConfigForm({...configForm, previewerBgColor: e.target.value})}
+                            className="flex-1 bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-1.5 font-mono text-xs"
+                            placeholder="#1c1917"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Previewer Text Color */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "প্রিভিউয়ার টেক্সট কালার" : "Previewer Text Color"}
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            value={configForm.previewerTextColor || '#f5f5f4'}
+                            onChange={(e) => setConfigForm({...configForm, previewerTextColor: e.target.value})}
+                            className="w-10 h-9 bg-stone-850 border border-stone-800 rounded cursor-pointer p-0.5"
+                          />
+                          <input
+                            type="text"
+                            value={configForm.previewerTextColor || '#f5f5f4'}
+                            onChange={(e) => setConfigForm({...configForm, previewerTextColor: e.target.value})}
+                            className="flex-1 bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-1.5 font-mono text-xs"
+                            placeholder="#f5f5f4"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Previewer Background Image URL */}
+                      <div className="space-y-1 md:col-span-2">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "প্রিভিউয়ার ব্যাকগ্রাউন্ড ছবি লিঙ্ক (Image URL)" : "Previewer Background Image URL"}
+                        </label>
+                        <input
+                          type="text"
+                          value={configForm.previewerBgImageUrl || ''}
+                          onChange={(e) => setConfigForm({...configForm, previewerBgImageUrl: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-mono text-xs"
+                          placeholder="https://images.unsplash.com/... or leave empty"
+                        />
+                      </div>
+
+                      {/* Previewer Background Image FILE Upload */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ছবি আপলোড করুন (File Upload)" : "Upload Background File"}
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              compressImageFile(file, (resized) => {
+                                setConfigForm({...configForm, previewerBgImageUrl: resized});
+                              });
+                            }
+                          }}
+                          className="w-full bg-stone-850 border border-stone-800 rounded p-1 text-[11px] text-stone-300 cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Previewer Logo/Icon Image URL */}
+                      <div className="space-y-1 md:col-span-2">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "প্রিভিউয়ার লোগো/আইকন লিঙ্ক (Logo URL)" : "Previewer Logo/Icon URL"}
+                        </label>
+                        <input
+                          type="text"
+                          value={configForm.previewerLogoUrl || ''}
+                          onChange={(e) => setConfigForm({...configForm, previewerLogoUrl: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-mono text-xs"
+                          placeholder="https://images.unsplash.com/... or leave empty"
+                        />
+                      </div>
+
+                      {/* Previewer Logo/Icon FILE Upload */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "লোগো আপলোড করুন (File Upload)" : "Upload Logo File"}
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              compressImageFile(file, (resized) => {
+                                setConfigForm({...configForm, previewerLogoUrl: resized});
+                              });
+                            }
+                          }}
+                          className="w-full bg-stone-850 border border-stone-800 rounded p-1 text-[11px] text-stone-300 cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Previewer Font Family Selection */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "প্রিভিউয়ার ফন্ট স্টাইল" : "Previewer Font Family"}
+                        </label>
+                        <select
+                          value={configForm.previewerFontFamily || 'sans'}
+                          onChange={(e) => setConfigForm({...configForm, previewerFontFamily: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-sans text-xs cursor-pointer"
+                        >
+                          <option value="sans">Inter (Modern & Clean)</option>
+                          <option value="serif">Playfair Display (Elegant Luxury)</option>
+                          <option value="space">Space Grotesk (Tech/Futuristic)</option>
+                          <option value="mono">JetBrains Mono (Digital Developer)</option>
+                          <option value="cursive">Caveat (Creative/Boutique)</option>
+                          <option value="bengali">Noto Serif Bengali (Traditional Elegant)</option>
+                        </select>
+                      </div>
+
+                      {/* Previewer Base Font Size */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "প্রিভিউয়ার ফন্ট সাইজ" : "Previewer Base Font Size"}
+                        </label>
+                        <select
+                          value={configForm.previewerFontSize || '100%'}
+                          onChange={(e) => setConfigForm({...configForm, previewerFontSize: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-sans text-xs cursor-pointer"
+                        >
+                          <option value="90%">Small (90%)</option>
+                          <option value="95%">Medium-Small (95%)</option>
+                          <option value="100%">Normal (100%)</option>
+                          <option value="105%">Medium-Large (105%)</option>
+                          <option value="110%">Large (110%)</option>
+                          <option value="115%">Extra Large (115%)</option>
+                          <option value="120%">Huge (120%)</option>
+                        </select>
+                      </div>
+
+                      {/* Previewer Background Image Opacity Overlay */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "প্রিভিউয়ার ব্যাকগ্রাউন্ড ছবি অপাসিটি" : "Previewer Background Overlay Opacity"}
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={configForm.previewerBgOpacity || '100'}
+                            onChange={(e) => setConfigForm({...configForm, previewerBgOpacity: e.target.value})}
+                            className="flex-1 accent-amber-500 animate-none cursor-pointer"
+                          />
+                          <span className="text-xs font-mono font-bold text-amber-500 shrink-0 w-8 text-right">
+                            {configForm.previewerBgOpacity || '100'}%
+                          </span>
+                        </div>
+                      </div>
+                      
+                    </div>
+                  </div>
+
+                  {/* FOOTER BRAND STATEMENT & COPIES CUSTOMIZATION (NEW) */}
+                  <div className="md:col-span-2 mt-6 pt-6 border-t border-stone-800">
+                    <div className="flex items-center gap-2 mb-4">
+                      <BookOpen className="w-4 h-4 text-amber-500 animate-pulse" />
+                      <h3 className="text-sm font-black text-amber-500 uppercase tracking-wider">
+                        {lang === "bn" ? "ফুটার ব্র্যান্ড স্টেটমেন্ট ও কপি কাস্টমাইজেশন" : "Footer Brand Statement & Copies Customization"}
+                      </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-stone-900/60 p-4 rounded-xl border border-stone-800/80">
+                      
+                      {/* Footer BG Color */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ফুটার ব্যাকগ্রাউন্ড কালার" : "Footer Background Color"}
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            value={configForm.footerBgColor || '#1c1917'}
+                            onChange={(e) => setConfigForm({...configForm, footerBgColor: e.target.value})}
+                            className="w-10 h-9 bg-stone-850 border border-stone-800 rounded cursor-pointer p-0.5"
+                          />
+                          <input
+                            type="text"
+                            value={configForm.footerBgColor || '#1c1917'}
+                            onChange={(e) => setConfigForm({...configForm, footerBgColor: e.target.value})}
+                            className="flex-1 bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-1.5 font-mono text-xs"
+                            placeholder="#1c1917"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Footer Text Color */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ফুটার টেক্সট কালার" : "Footer Text Color"}
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            value={configForm.footerTextColor || '#a8a29e'}
+                            onChange={(e) => setConfigForm({...configForm, footerTextColor: e.target.value})}
+                            className="w-10 h-9 bg-stone-850 border border-stone-800 rounded cursor-pointer p-0.5"
+                          />
+                          <input
+                            type="text"
+                            value={configForm.footerTextColor || '#a8a29e'}
+                            onChange={(e) => setConfigForm({...configForm, footerTextColor: e.target.value})}
+                            className="flex-1 bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-1.5 font-mono text-xs"
+                            placeholder="#a8a29e"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Footer Title Color */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ফুটার শিরোনাম টেক্সট কালার" : "Footer Header Text Color"}
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            value={configForm.footerTitleColor || '#f5f5f4'}
+                            onChange={(e) => setConfigForm({...configForm, footerTitleColor: e.target.value})}
+                            className="w-10 h-9 bg-stone-850 border border-stone-800 rounded cursor-pointer p-0.5"
+                          />
+                          <input
+                            type="text"
+                            value={configForm.footerTitleColor || '#f5f5f4'}
+                            onChange={(e) => setConfigForm({...configForm, footerTitleColor: e.target.value})}
+                            className="flex-1 bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-1.5 font-mono text-xs"
+                            placeholder="#f5f5f4"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Footer Background Image URL */}
+                      <div className="space-y-1 md:col-span-2">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ফুটার ব্যাকগ্রাউন্ড ছবি লিঙ্ক (Image URL)" : "Footer Background Image URL"}
+                        </label>
+                        <input
+                          type="text"
+                          value={configForm.footerBgImageUrl || ''}
+                          onChange={(e) => setConfigForm({...configForm, footerBgImageUrl: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-mono text-xs"
+                          placeholder="https://images.unsplash.com/... or leave empty"
+                        />
+                      </div>
+
+                      {/* Footer Background Image FILE Upload */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ছবি আপলোড করুন (File Upload)" : "Upload Background File"}
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              compressImageFile(file, (resized) => {
+                                setConfigForm({...configForm, footerBgImageUrl: resized});
+                              });
+                            }
+                          }}
+                          className="w-full bg-stone-850 border border-stone-800 rounded p-1 text-[11px] text-stone-300 cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Footer Custom Logo Image URL */}
+                      <div className="space-y-1 md:col-span-2">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ফুটার কাস্টম লোগো লিঙ্ক (Logo URL)" : "Footer Custom Logo URL"}
+                        </label>
+                        <input
+                          type="text"
+                          value={configForm.footerLogoUrl || ''}
+                          onChange={(e) => setConfigForm({...configForm, footerLogoUrl: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-mono text-xs"
+                          placeholder="https://images.unsplash.com/... or leave empty"
+                        />
+                      </div>
+
+                      {/* Footer Custom Logo FILE Upload */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "লোগো আপলোড করুন (File Upload)" : "Upload Logo File"}
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              compressImageFile(file, (resized) => {
+                                setConfigForm({...configForm, footerLogoUrl: resized});
+                              });
+                            }
+                          }}
+                          className="w-full bg-stone-850 border border-stone-800 rounded p-1 text-[11px] text-stone-300 cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Footer Font Family Selection */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ফুটার ফন্ট স্টাইল" : "Footer Font Family"}
+                        </label>
+                        <select
+                          value={configForm.footerFontFamily || 'sans'}
+                          onChange={(e) => setConfigForm({...configForm, footerFontFamily: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-sans text-xs cursor-pointer"
+                        >
+                          <option value="sans">Inter (Modern & Clean)</option>
+                          <option value="serif">Playfair Display (Elegant Luxury)</option>
+                          <option value="space">Space Grotesk (Tech/Futuristic)</option>
+                          <option value="mono">JetBrains Mono (Digital Developer)</option>
+                          <option value="cursive">Caveat (Creative/Boutique)</option>
+                          <option value="bengali">Noto Serif Bengali (Traditional Elegant)</option>
+                        </select>
+                      </div>
+
+                      {/* Footer Base Font Size */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ফুটার ফন্ট সাইজ" : "Footer Base Font Size"}
+                        </label>
+                        <select
+                          value={configForm.footerFontSize || '100%'}
+                          onChange={(e) => setConfigForm({...configForm, footerFontSize: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-sans text-xs cursor-pointer"
+                        >
+                          <option value="90%">Small (90%)</option>
+                          <option value="95%">Medium-Small (95%)</option>
+                          <option value="100%">Normal (100%)</option>
+                          <option value="105%">Medium-Large (105%)</option>
+                          <option value="110%">Large (110%)</option>
+                          <option value="115%">Extra Large (115%)</option>
+                          <option value="120%">Huge (120%)</option>
+                        </select>
+                      </div>
+
+                      {/* Footer Background Image Opacity Overlay */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider block">
+                          {lang === "bn" ? "ফুটার ব্যাকগ্রাউন্ড ছবি অপাসিটি" : "Footer Background Overlay Opacity"}
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={configForm.footerBgOpacity || '100'}
+                            onChange={(e) => setConfigForm({...configForm, footerBgOpacity: e.target.value})}
+                            className="flex-1 accent-amber-500 animate-none cursor-pointer"
+                          />
+                          <span className="text-xs font-mono font-bold text-amber-500 shrink-0 w-8 text-right">
+                            {configForm.footerBgOpacity || '100'}%
+                          </span>
+                        </div>
+                      </div>
+                      
+                    </div>
+                  </div>
+
                   {/* LEADERSHIP EDITING SECTION (With Picture Option) */}
                   <div className="md:col-span-2 mt-6 pt-6 border-t border-stone-800">
                     <h3 className="text-sm font-black text-amber-500 uppercase tracking-wider mb-4">Leadership Section</h3>
@@ -1627,6 +2479,352 @@ export default function AdminGate({
                   </button>
                 </div>
               </form>
+            </div>
+          )}
+
+          {/* ==========================================
+              TAB 5: FASHION BLOG PUBLISHER (CMS)
+              ========================================== */}
+          {activeTab === 'blog' && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-bold text-white">
+                    {lang === 'bn' ? 'ফ্যাশন ব্লগ পাবলিশার' : 'Fashion Blog & Article CMS'}
+                  </h2>
+                  <p className="text-xs text-stone-400">
+                    {lang === 'bn' 
+                      ? 'স্টোরের জন্য আকর্ষণীয় ফ্যাশন ব্লগ এবং কন্টেন্ট পাবলিশ করুন।' 
+                      : 'Create, edit, and publish engaging articles and style guides for Nusrah Boutique.'}
+                  </p>
+                </div>
+                {editingBlogId && (
+                  <button
+                    onClick={() => {
+                      setEditingBlogId(null);
+                      setBlogForm({
+                        titleEn: '',
+                        titleBn: '',
+                        author: '',
+                        image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=600',
+                        summaryEn: '',
+                        summaryBn: '',
+                        contentEn: '',
+                        contentBn: ''
+                      });
+                    }}
+                    className="bg-stone-850 hover:bg-stone-800 text-stone-300 font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-lg flex items-center gap-1.5 cursor-pointer shadow-lg transition-all"
+                  >
+                    <span>{lang === 'bn' ? 'নতুন পোস্ট তৈরি করুন' : 'Switch to Create New'}</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                {/* PANE 1: BLOG WRITE/EDIT FORM */}
+                <div className="xl:col-span-5 space-y-4">
+                  <form 
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (!blogForm.titleEn || !blogForm.titleBn || !blogForm.author) {
+                        alert(lang === 'bn' ? 'দয়া করে টাইটেল ও লেখকের নাম লিখুন।' : 'Please supply titles and author name.');
+                        return;
+                      }
+                      if (editingBlogId) {
+                        // Update existing
+                        setBlogPosts(prev => prev.map(post => 
+                          post.id === editingBlogId 
+                            ? { ...post, ...blogForm } 
+                            : post
+                        ));
+                        alert(lang === 'bn' ? 'ব্লগ পোস্ট সফলভাবে আপডেট করা হয়েছে!' : 'Blog post successfully updated!');
+                        setEditingBlogId(null);
+                      } else {
+                        // Add new
+                        const newPost = {
+                          id: `post-${Date.now()}`,
+                          ...blogForm,
+                          date: new Date().toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })
+                        };
+                        setBlogPosts(prev => [newPost, ...prev]);
+                        alert(lang === 'bn' ? 'নতুন ব্লগ পোস্ট সফলভাবে পাবলিশ করা হয়েছে!' : 'New blog post successfully published!');
+                      }
+                      
+                      // Reset Form
+                      setBlogForm({
+                        titleEn: '',
+                        titleBn: '',
+                        author: '',
+                        image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=600',
+                        summaryEn: '',
+                        summaryBn: '',
+                        contentEn: '',
+                        contentBn: ''
+                      });
+                    }}
+                    className={`bg-stone-900 border ${editingBlogId ? 'border-amber-500/50 ring-1 ring-amber-500/20' : 'border-stone-850'} rounded-xl p-5 space-y-4 text-xs transition-all`}
+                  >
+                    <div className="flex items-center justify-between pb-2 border-b border-stone-800">
+                      <h3 className="text-sm font-black text-amber-500 uppercase tracking-wider">
+                        {editingBlogId ? (lang === 'bn' ? 'ব্লগ পোস্ট এডিট করুন' : 'Edit Blog Post') : (lang === 'bn' ? 'নতুন ব্লগ পোস্ট যোগ করুন' : 'Write New Blog Article')}
+                      </h3>
+                      {editingBlogId && (
+                        <span className="bg-amber-500/10 text-amber-500 text-[9px] font-black uppercase px-2 py-0.5 rounded tracking-widest animate-pulse">
+                          {lang === 'bn' ? 'সম্পাদনা মোড' : 'Editing Mode'}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-450 tracking-wider block">Article Title (English)</label>
+                        <input
+                          type="text"
+                          required
+                          value={blogForm.titleEn}
+                          onChange={(e) => setBlogForm({...blogForm, titleEn: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 focus:ring-1 focus:ring-amber-500"
+                          placeholder="e.g. Traditional Saree Guide for Summer"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-450 tracking-wider block">নিবন্ধের শিরোনাম (বাংলা)</label>
+                        <input
+                          type="text"
+                          required
+                          value={blogForm.titleBn}
+                          onChange={(e) => setBlogForm({...blogForm, titleBn: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 focus:ring-1 focus:ring-amber-500"
+                          placeholder="যেমন: গ্রীষ্মকালীন সুতি শাড়ি পরার সঠিক নিয়ম"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black uppercase text-stone-450 tracking-wider block">Author (লেখক)</label>
+                          <input
+                            type="text"
+                            required
+                            value={blogForm.author}
+                            onChange={(e) => setBlogForm({...blogForm, author: e.target.value})}
+                            className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 focus:ring-1 focus:ring-amber-500"
+                            placeholder="e.g. Asma Ul Hosna"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black uppercase text-stone-450 tracking-wider block">Cover Photo URL</label>
+                          <input
+                            type="text"
+                            value={blogForm.image}
+                            onChange={(e) => setBlogForm({...blogForm, image: e.target.value})}
+                            className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 focus:ring-1 focus:ring-amber-500 font-mono text-xs"
+                            placeholder="Image URL"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-450 tracking-wider block">Upload Cover Image</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              compressImageFile(file, (resized) => {
+                                setBlogForm(prev => ({...prev, image: resized}));
+                              });
+                            }
+                          }}
+                          className="w-full bg-stone-850 text-white border border-stone-800 rounded px-2 py-1.5 text-xs"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-450 tracking-wider block">Short Summary (English)</label>
+                        <textarea
+                          rows={2}
+                          required
+                          value={blogForm.summaryEn}
+                          onChange={(e) => setBlogForm({...blogForm, summaryEn: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2"
+                          placeholder="Brief overview of the article..."
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-450 tracking-wider block">সংক্ষিপ্ত সারসংক্ষেপ (বাংলা)</label>
+                        <textarea
+                          rows={2}
+                          required
+                          value={blogForm.summaryBn}
+                          onChange={(e) => setBlogForm({...blogForm, summaryBn: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2"
+                          placeholder="নিবন্ধের মূল বিষয়বস্তুর ছোট সারসংক্ষেপ..."
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-450 tracking-wider block">Full Article Content (English)</label>
+                        <textarea
+                          rows={5}
+                          required
+                          value={blogForm.contentEn}
+                          onChange={(e) => setBlogForm({...blogForm, contentEn: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg p-3 font-sans leading-relaxed"
+                          placeholder="Write detailed English article here..."
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-stone-450 tracking-wider block">বিস্তারিত আর্টিকেল কনটেন্ট (বাংলা)</label>
+                        <textarea
+                          rows={5}
+                          required
+                          value={blogForm.contentBn}
+                          onChange={(e) => setBlogForm({...blogForm, contentBn: e.target.value})}
+                          className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg p-3 font-sans leading-relaxed"
+                          placeholder="এখানে বিস্তারিত বাংলায় আর্টিকেলটি লিখুন..."
+                        />
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-stone-850 flex justify-end gap-2">
+                      {editingBlogId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingBlogId(null);
+                            setBlogForm({
+                              titleEn: '',
+                              titleBn: '',
+                              author: '',
+                              image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=600',
+                              summaryEn: '',
+                              summaryBn: '',
+                              contentEn: '',
+                              contentBn: ''
+                            });
+                          }}
+                          className="bg-stone-800 hover:bg-stone-750 text-stone-300 font-bold px-4 py-2 rounded-lg uppercase"
+                        >
+                          {lang === 'bn' ? 'বাতিল' : 'Cancel'}
+                        </button>
+                      )}
+                      <button
+                        type="submit"
+                        className="bg-amber-500 hover:bg-amber-600 text-stone-950 font-black px-5 py-2 rounded-lg uppercase tracking-wider flex items-center gap-1.5"
+                      >
+                        <Save className="w-4 h-4" />
+                        <span>{editingBlogId ? (lang === 'bn' ? 'আপডেট করুন' : 'Update Post') : (lang === 'bn' ? 'পাবলিশ করুন' : 'Publish Article')}</span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* PANE 2: ALL BLOG POSTS REGISTRY (ALWAYS VISIBLE) */}
+                <div className="xl:col-span-7 space-y-4">
+                  <div className="bg-stone-900 border border-stone-850 rounded-xl p-4 flex items-center justify-between">
+                    <h3 className="text-xs font-black uppercase tracking-wider text-stone-300">
+                      {lang === 'bn' ? `ব্লগ পোস্টসমূহ (${blogPosts.length}টি নিবন্ধ)` : `Published Articles (${blogPosts.length} posts)`}
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {blogPosts.map((post) => {
+                      const isCurrentlyEditing = editingBlogId === post.id;
+                      return (
+                        <div 
+                          key={post.id} 
+                          className={`bg-stone-900 border ${isCurrentlyEditing ? 'border-amber-500' : 'border-stone-850'} rounded-xl overflow-hidden flex flex-col group hover:border-brand-gold/30 transition-all duration-300`}
+                        >
+                          <div className="h-36 bg-stone-950 relative overflow-hidden shrink-0">
+                            <img 
+                              src={post.image} 
+                              alt="" 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                              referrerPolicy="no-referrer"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-stone-950 to-transparent opacity-60" />
+                            <span className="absolute bottom-2 left-2 bg-brand-navy border border-brand-gold/20 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest">
+                              {post.author}
+                            </span>
+                            <span className="absolute bottom-2 right-2 text-[8px] font-bold text-stone-300">
+                              {post.date}
+                            </span>
+                          </div>
+                          <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                            <div className="space-y-1.5">
+                              <h4 className="font-extrabold text-xs sm:text-sm text-stone-100 group-hover:text-brand-gold transition-colors leading-snug line-clamp-1">
+                                {lang === 'bn' ? post.titleBn : post.titleEn}
+                              </h4>
+                              <p className="text-[10px] sm:text-[11px] text-stone-450 leading-relaxed line-clamp-2">
+                                {lang === 'bn' ? post.summaryBn : post.summaryEn}
+                              </p>
+                            </div>
+                            <div className="flex justify-end gap-1.5 border-t border-stone-850 pt-2.5">
+                              <button
+                                onClick={() => {
+                                  setBlogForm({
+                                    titleEn: post.titleEn,
+                                    titleBn: post.titleBn,
+                                    author: post.author,
+                                    image: post.image,
+                                    summaryEn: post.summaryEn,
+                                    summaryBn: post.summaryBn,
+                                    contentEn: post.contentEn,
+                                    contentBn: post.contentBn
+                                  });
+                                  setEditingBlogId(post.id);
+                                }}
+                                className={`p-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                                  isCurrentlyEditing 
+                                    ? 'bg-amber-500 text-stone-950 font-black' 
+                                    : 'bg-stone-850 hover:bg-stone-800 text-stone-300'
+                                }`}
+                              >
+                                <Edit className="w-3 h-3" />
+                                <span>{lang === 'bn' ? 'সম্পাদনা' : 'Edit'}</span>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm(lang === 'bn' ? 'আপনি কি নিশ্চিতভাবে এই পোস্টটি মুছে ফেলতে চান?' : 'Are you sure you want to delete this blog post?')) {
+                                    setBlogPosts(prev => prev.filter(p => p.id !== post.id));
+                                    if (editingBlogId === post.id) {
+                                      setEditingBlogId(null);
+                                      setBlogForm({
+                                        titleEn: '',
+                                        titleBn: '',
+                                        author: '',
+                                        image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=600',
+                                        summaryEn: '',
+                                        summaryBn: '',
+                                        contentEn: '',
+                                        contentBn: ''
+                                      });
+                                    }
+                                  }
+                                }}
+                                className="bg-rose-950/40 text-rose-300 hover:bg-rose-900 hover:text-white p-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                <span>{lang === 'bn' ? 'মুছে ফেলুন' : 'Delete'}</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {blogPosts.length === 0 && (
+                      <div className="col-span-full bg-stone-900 border border-stone-850 p-12 rounded-xl text-center text-stone-500">
+                        {lang === 'bn' ? 'কোনো ব্লগ পোস্ট পাওয়া যায়নি।' : 'No blog posts published in the registry yet.'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -1788,31 +2986,86 @@ export default function AdminGate({
                   </label>
                 </div>
 
-                <div className="space-y-1 sm:col-span-2">
-                  <label className="text-[9px] font-black uppercase text-stone-450 tracking-wider block">Image Display URL or Upload</label>
+                {/* MULTIPLE IMAGES MANAGER (NEW) */}
+                <div className="space-y-2 sm:col-span-2 bg-stone-950/40 p-3 rounded-lg border border-stone-850">
+                  <label className="text-[10px] font-black uppercase text-amber-500 tracking-wider block">
+                    {lang === 'bn' ? 'পণ্যের ছবিসমূহ (Multiple Images - সর্বনিম্ন ১টি)' : 'Product Images (Multiple - Min 1)'}
+                  </label>
+                  
+                  {/* Grid of existing images in form */}
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                    {(newProductForm.images || []).filter(img => img && img.trim() !== '').map((imgUrl, imgIdx) => (
+                      <div key={imgIdx} className="relative group border border-stone-800 rounded-lg overflow-hidden bg-stone-950 aspect-square">
+                        <img src={imgUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updatedImages = (newProductForm.images || []).filter((_, idx) => idx !== imgIdx);
+                            setNewProductForm({ ...newProductForm, images: updatedImages });
+                          }}
+                          className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full opacity-100 transition-opacity border-0 cursor-pointer"
+                          title="Remove Image"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                    {(newProductForm.images || []).filter(img => img && img.trim() !== '').length === 0 && (
+                      <div className="col-span-full py-4 text-center text-stone-500 italic">
+                        {lang === 'bn' ? 'কোন ছবি এখনও যোগ করা হয়নি' : 'No images added yet. Click upload or enter a URL below.'}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Input for new image URL */}
                   <div className="flex gap-2">
                     <input
+                      id="new-image-url-input-add"
                       type="text"
-                      required
-                      placeholder="https://images.unsplash.com/..."
-                      value={newProductForm.images?.[0] || ''}
-                      onChange={(e) => setNewProductForm({...newProductForm, images: [e.target.value]})}
-                      className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-mono"
+                      placeholder="https://example.com/image.jpg"
+                      className="flex-1 bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-1.5 font-mono text-xs"
                     />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const inputEl = document.getElementById('new-image-url-input-add') as HTMLInputElement;
+                        if (inputEl && inputEl.value.trim() !== '') {
+                          const updatedImages = [...(newProductForm.images || []).filter(img => img && img.trim() !== ''), inputEl.value.trim()];
+                          setNewProductForm({ ...newProductForm, images: updatedImages });
+                          inputEl.value = '';
+                        }
+                      }}
+                      className="bg-amber-500 hover:bg-amber-600 text-stone-950 px-3 py-1.5 rounded-lg text-xs font-bold border-0 cursor-pointer shrink-0"
+                    >
+                      {lang === 'bn' ? 'যোগ করুন' : 'Add URL'}
+                    </button>
+                  </div>
+
+                  {/* File uploader for additional images */}
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase text-stone-450 tracking-wider block">
+                      {lang === 'bn' ? 'বা এক বা একাধিক কম্পিউটার ফাইল আপলোড করুন' : 'Or Upload Local Files (Multiple support)'}
+                    </label>
                     <input
                       type="file"
                       accept="image/*"
+                      multiple
                       onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            setNewProductForm({...newProductForm, images: [reader.result as string]});
-                          };
-                          reader.readAsDataURL(file);
+                        const files = e.target.files;
+                        if (files) {
+                          Array.from(files).forEach((file: any) => {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              setNewProductForm(prev => {
+                                const updatedImages = [...(prev.images || []).filter(img => img && img.trim() !== ''), reader.result as string];
+                                return { ...prev, images: updatedImages };
+                              });
+                            };
+                            reader.readAsDataURL(file);
+                          });
                         }
                       }}
-                      className="bg-stone-850 border border-stone-800 text-white rounded-lg p-1 w-24 text-[10px] file:text-[9px] file:bg-stone-700 file:text-white file:border-0 file:rounded file:px-2 file:py-1 cursor-pointer"
+                      className="w-full bg-stone-850 border border-stone-800 text-stone-300 rounded-lg px-3 py-1 text-xs file:bg-stone-800 file:border-0 file:text-white file:px-2.5 file:py-1 file:rounded file:text-[10px] file:font-black file:uppercase file:cursor-pointer"
                     />
                   </div>
                 </div>
@@ -1976,30 +3229,86 @@ export default function AdminGate({
                   </label>
                 </div>
 
-                <div className="space-y-1 sm:col-span-2">
-                  <label className="text-[9px] font-black uppercase text-stone-450 tracking-wider block">Cover Image URL or Upload</label>
+                {/* MULTIPLE IMAGES MANAGER (NEW) */}
+                <div className="space-y-2 sm:col-span-2 bg-stone-950/40 p-3 rounded-lg border border-stone-850">
+                  <label className="text-[10px] font-black uppercase text-amber-500 tracking-wider block">
+                    {lang === 'bn' ? 'পণ্যের ছবিসমূহ (Multiple Images - সর্বনিম্ন ১টি)' : 'Product Images (Multiple - Min 1)'}
+                  </label>
+                  
+                  {/* Grid of existing images in form */}
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                    {(editProductForm.images || []).filter(img => img && img.trim() !== '').map((imgUrl, imgIdx) => (
+                      <div key={imgIdx} className="relative group border border-stone-800 rounded-lg overflow-hidden bg-stone-950 aspect-square">
+                        <img src={imgUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updatedImages = (editProductForm.images || []).filter((_, idx) => idx !== imgIdx);
+                            setEditProductForm({ ...editProductForm, images: updatedImages });
+                          }}
+                          className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full opacity-100 transition-opacity border-0 cursor-pointer"
+                          title="Remove Image"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                    {(editProductForm.images || []).filter(img => img && img.trim() !== '').length === 0 && (
+                      <div className="col-span-full py-4 text-center text-stone-500 italic">
+                        {lang === 'bn' ? 'কোন ছবি এখনও যোগ করা হয়নি' : 'No images added yet. Click upload or enter a URL below.'}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Input for new image URL */}
                   <div className="flex gap-2">
                     <input
+                      id="new-image-url-input-edit"
                       type="text"
-                      required
-                      value={editProductForm.images?.[0] || ''}
-                      onChange={(e) => setEditProductForm({...editProductForm, images: [e.target.value]})}
-                      className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-mono"
+                      placeholder="https://example.com/image.jpg"
+                      className="flex-1 bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-1.5 font-mono text-xs"
                     />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const inputEl = document.getElementById('new-image-url-input-edit') as HTMLInputElement;
+                        if (inputEl && inputEl.value.trim() !== '') {
+                          const updatedImages = [...(editProductForm.images || []).filter(img => img && img.trim() !== ''), inputEl.value.trim()];
+                          setEditProductForm({ ...editProductForm, images: updatedImages });
+                          inputEl.value = '';
+                        }
+                      }}
+                      className="bg-amber-500 hover:bg-amber-600 text-stone-950 px-3 py-1.5 rounded-lg text-xs font-bold border-0 cursor-pointer shrink-0"
+                    >
+                      {lang === 'bn' ? 'যোগ করুন' : 'Add URL'}
+                    </button>
+                  </div>
+
+                  {/* File uploader for additional images */}
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase text-stone-450 tracking-wider block">
+                      {lang === 'bn' ? 'বা এক বা একাধিক কম্পিউটার ফাইল আপলোড করুন' : 'Or Upload Local Files (Multiple support)'}
+                    </label>
                     <input
                       type="file"
                       accept="image/*"
+                      multiple
                       onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            setEditProductForm({...editProductForm, images: [reader.result as string]});
-                          };
-                          reader.readAsDataURL(file);
+                        const files = e.target.files;
+                        if (files) {
+                          Array.from(files).forEach((file: any) => {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              setEditProductForm(prev => {
+                                const updatedImages = [...(prev.images || []).filter(img => img && img.trim() !== ''), reader.result as string];
+                                return { ...prev, images: updatedImages };
+                              });
+                            };
+                            reader.readAsDataURL(file);
+                          });
                         }
                       }}
-                      className="bg-stone-850 border border-stone-800 text-white rounded-lg p-1 w-24 text-[10px] file:text-[9px] file:bg-stone-700 file:text-white file:border-0 file:rounded file:px-2 file:py-1 cursor-pointer"
+                      className="w-full bg-stone-850 border border-stone-800 text-stone-300 rounded-lg px-3 py-1 text-xs file:bg-stone-800 file:border-0 file:text-white file:px-2.5 file:py-1 file:rounded file:text-[10px] file:font-black file:uppercase file:cursor-pointer"
                     />
                   </div>
                 </div>
