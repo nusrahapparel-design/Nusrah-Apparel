@@ -543,7 +543,7 @@ export default function AdminGate({
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-white overflow-hidden border border-white">
             <img
-              src={nusrahLogo}
+              src={configForm.logoUrl || nusrahLogo}
               alt="Logo"
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"

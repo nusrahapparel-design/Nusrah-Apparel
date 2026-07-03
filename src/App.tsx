@@ -7754,18 +7754,19 @@ export default function App() {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto border-t border-white/20 mt-8 pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between text-[11px] text-white gap-2.5">
+        <div className="max-w-7xl mx-auto border-t border-white/20 mt-8 pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between text-[13px] text-white gap-2.5">
           <p>
             © {new Date().getFullYear()} Nusrah Apparel. All Rights Reserved.
-            Engineered with precision.
           </p>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <a
               href="#nusrah-system-gate"
-              className="text-[#FF6600] font-black text-xs hover:text-white transition-all cursor-pointer"
+              className="text-[#FFCC00] font-black text-sm hover:text-white transition-all cursor-pointer border-b-2 border-[#FFCC00] hover:border-white"
             >
-              Admin
+              ADMIN PANEL
             </a>
+            <span className="text-white/60">|</span>
+            <span className="text-white">Privacy Policy</span>
           </div>
         </div>
       </footer>
