@@ -2454,7 +2454,7 @@ export default function App() {
                   <div
                     key={`${prod.id}-${idx}`}
                     onClick={() => handleOpenDetails(prod)}
-                    className="flex gap-3 bg-stone-900/80 hover:bg-stone-850 hover:border-amber-500/50 border border-stone-850/70 p-2.5 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-[1.01] items-center"
+                    className="flex gap-3 bg-stone-900/80 hover:bg-stone-850 hover:border-nrc-orange/50 border border-stone-850/70 p-2.5 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-[1.01] items-center"
                   >
                     {/* Thumbnail representation */}
                     <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-stone-950 border border-stone-800 flex-shrink-0 relative">
@@ -2482,7 +2482,7 @@ export default function App() {
 
                     {/* Content Details */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-[9px] font-black uppercase text-amber-500 tracking-wider leading-none">
+                      <p className="text-[9px] font-black uppercase text-nrc-orange tracking-wider leading-none">
                         {lang === "bn"
                           ? "প্রিমিয়াম ক্যাটাগরি"
                           : "Premium Select"}

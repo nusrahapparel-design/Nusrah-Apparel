@@ -753,7 +753,7 @@ export default function AdminGate({
           <button
             onClick={() => setActiveTab('dashboard')}
             className={`flex items-center gap-2.5 px-4 py-3 rounded-lg text-xs font-black tracking-wider uppercase transition-all w-full flex-shrink-0 cursor-pointer ${
-              activeTab === 'dashboard' ? 'bg-amber-500 text-stone-950 font-black shadow-lg shadow-amber-500/10' : 'text-stone-400 hover:bg-stone-850 hover:text-stone-200'
+              activeTab === 'dashboard' ? 'bg-nrc-orange text-stone-950 font-black shadow-lg shadow-nrc-orange/10' : 'text-stone-400 hover:bg-stone-850 hover:text-stone-200'
             }`}
           >
             <LayoutDashboard className="w-4 h-4" />
@@ -763,7 +763,7 @@ export default function AdminGate({
           <button
             onClick={() => setActiveTab('products')}
             className={`flex items-center gap-2.5 px-4 py-3 rounded-lg text-xs font-black tracking-wider uppercase transition-all w-full flex-shrink-0 cursor-pointer ${
-              activeTab === 'products' ? 'bg-amber-500 text-stone-950 font-black shadow-lg shadow-amber-500/10' : 'text-stone-400 hover:bg-stone-850 hover:text-stone-200'
+              activeTab === 'products' ? 'bg-nrc-orange text-stone-950 font-black shadow-lg shadow-nrc-orange/10' : 'text-stone-400 hover:bg-stone-850 hover:text-stone-200'
             }`}
           >
             <Package className="w-4 h-4" />
@@ -773,7 +773,7 @@ export default function AdminGate({
           <button
             onClick={() => setActiveTab('orders')}
             className={`flex items-center gap-2.5 px-4 py-3 rounded-lg text-xs font-black tracking-wider uppercase transition-all w-full flex-shrink-0 relative cursor-pointer ${
-              activeTab === 'orders' ? 'bg-amber-500 text-stone-950 font-black shadow-lg shadow-amber-500/10' : 'text-stone-400 hover:bg-stone-850 hover:text-stone-200'
+              activeTab === 'orders' ? 'bg-nrc-orange text-stone-950 font-black shadow-lg shadow-nrc-orange/10' : 'text-stone-400 hover:bg-stone-850 hover:text-stone-200'
             }`}
           >
             <ShoppingCart className="w-4 h-4" />
