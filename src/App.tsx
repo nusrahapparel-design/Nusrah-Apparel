@@ -7425,7 +7425,7 @@ export default function App() {
                       ? leadership.ceo.titleBn
                       : leadership.ceo.titleEn}
                   </span>
-                  <h4 className="font-extrabold text-sm tracking-tight">
+                  <h4 className="font-extrabold text-sm tracking-tight text-amber-400">
                     {lang === "bn"
                       ? leadership.ceo.nameBn
                       : leadership.ceo.nameEn}
@@ -7448,7 +7448,7 @@ export default function App() {
 
                 <div className="border-t border-stone-100 pt-3 flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] text-stone-500 font-bold uppercase tracking-widest">
+                    <p className="text-[10px] text-amber-600 font-bold uppercase tracking-widest">
                       {lang === "bn"
                         ? leadership.ceo.titleBn
                         : leadership.ceo.titleEn}
@@ -7478,12 +7478,12 @@ export default function App() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-brand-navy/60 to-transparent"></div>
                 <div className="absolute bottom-4 left-4 text-white">
-                  <span className="bg-brand-gold text-[9px] font-black tracking-widest uppercase px-2 py-0.5 rounded-sm block w-fit mb-1">
+                  <span className="bg-amber-600 text-[9px] font-black tracking-widest uppercase px-2 py-0.5 rounded-sm block w-fit mb-1">
                     {lang === "bn"
                       ? leadership.md.titleBn
                       : leadership.md.titleEn}
                   </span>
-                  <h4 className="font-extrabold text-sm tracking-tight">
+                  <h4 className="font-extrabold text-sm tracking-tight text-amber-400">
                     {lang === "bn"
                       ? leadership.md.nameBn
                       : leadership.md.nameEn}
@@ -7506,7 +7506,7 @@ export default function App() {
 
                 <div className="border-t border-stone-100 pt-3 flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] text-stone-500 font-bold uppercase tracking-widest">
+                    <p className="text-[10px] text-amber-600 font-bold uppercase tracking-widest">
                       {lang === "bn"
                         ? leadership.md.titleBn
                         : leadership.md.titleEn}
