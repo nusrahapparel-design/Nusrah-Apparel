@@ -263,6 +263,7 @@ export default function AdminGate({
     if (productIdToDelete) {
       const newProducts = products.filter(p => p.id !== productIdToDelete);
       setProducts(newProducts);
+      localStorage.setItem("nusrah_products_v2", JSON.stringify(newProducts));
       dbSaveProducts(newProducts);
       setProductIdToDelete(null);
     }
@@ -278,6 +279,7 @@ export default function AdminGate({
       return p;
     });
     setProducts(newProducts);
+    localStorage.setItem("nusrah_products_v2", JSON.stringify(newProducts));
     dbSaveProducts(newProducts);
   };
 
@@ -314,6 +316,7 @@ export default function AdminGate({
 
     const newProducts = [productToAdd, ...products];
     setProducts(newProducts);
+    localStorage.setItem("nusrah_products_v2", JSON.stringify(newProducts));
     dbSaveProducts(newProducts);
     setIsAddModalOpen(false);
     
@@ -372,6 +375,7 @@ export default function AdminGate({
     });
 
     setProducts(newProducts);
+    localStorage.setItem("nusrah_products_v2", JSON.stringify(newProducts));
     dbSaveProducts(newProducts);
 
     setEditingProduct(null);

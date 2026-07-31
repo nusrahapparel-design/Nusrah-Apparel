@@ -674,7 +674,7 @@ export default function App() {
         nameBn: "আসমা উল হোসনা",
         titleEn: "Managing Director",
         titleBn: "ব্যবস্থাপনা পরিচালক",
-        pic: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600",
+        pic: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=600",
         textEn:
           "Providing the world-class, comfortable & trendy apparel experience is the core goal of Nusrah Apparel. Integrity, pristine finishing, and the love of our respected customers are our guiding paths. Customer trust is our main driving force.",
         textBn:
@@ -685,7 +685,7 @@ export default function App() {
         nameBn: "কাজী রিয়াজুল হাসান",
         titleEn: "Director (Operations & Marketing)",
         titleBn: "পরিচালক (অপারেশন্স ও মার্কেটিং)",
-        pic: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=600",
+        pic: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600",
         textEn:
           "From ensuring impeccable finishing of our fabrics to delivering trendy & world-class apparel to our customers' doorsteps—at Nusrah Apparel, we are committed to maintaining excellence at every step. Together with honesty, quality, and the love of our respected customers, we aim to create new fashion experiences.",
         textBn:
@@ -772,7 +772,7 @@ export default function App() {
       facebookLink: "https://www.facebook.com/nusrahapparel",
       youtubeLink: "https://www.youtube.com/@nusrahapparel",
       instagramLink: "https://www.instagram.com/nusrahapparel",
-      whatsappLink: "",
+      whatsappLink: "https://wa.me/8801879888883",
       liveVideoUrl: "",
       themeBgColor: "#fafaf9",
       themeTextColor: "#1c1917",
