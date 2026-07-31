@@ -104,6 +104,25 @@ function hexToRgb(hex: string): string {
     : "250, 250, 249";
 }
 
+function formatSocialUrl(url: string, platform: 'facebook' | 'instagram' | 'youtube' | 'whatsapp'): string {
+  if (!url) return '';
+  let trimmed = url.trim();
+  if (platform === 'whatsapp') {
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+    const digits = trimmed.replace(/[^0-9]/g, '');
+    return digits ? `https://wa.me/${digits}` : `https://wa.me/${trimmed}`;
+  }
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  trimmed = trimmed.replace(/^www\./, '');
+  if (platform === 'youtube') {
+    if (trimmed.startsWith('@') || !trimmed.includes('/')) {
+      return `https://www.youtube.com/${trimmed.startsWith('@') ? trimmed : '@' + trimmed}`;
+    }
+    return `https://www.youtube.com/${trimmed.replace(/^\//, '')}`;
+  }
+  return `https://www.${platform}.com/${trimmed.replace(/^\//, '')}`;
+}
+
 export default function App() {
   // ==========================================
   // Core Bilingual & Multi-Currency State
@@ -259,17 +278,27 @@ export default function App() {
         // 3. Sync CRM Shop Configuration
         const dbConfig = await dbGetShopConfig();
         if (dbConfig) {
-          setShopConfig((prev) => ({ ...prev, ...dbConfig }));
+          setShopConfig((prev) => {
+            const merged = { ...prev, ...dbConfig };
+            localStorage.setItem("nusrah_shop_config_v1", JSON.stringify(merged));
+            return merged;
+          });
           if (dbConfig.leadership) {
-            setLeadership({
-              ceo: {
-                ...dbConfig.leadership.ceo,
-                pic: dbConfig.leadership.ceo?.pic || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600"
-              },
-              md: {
-                ...dbConfig.leadership.md,
-                pic: dbConfig.leadership.md?.pic || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=600"
-              }
+            setLeadership((prev) => {
+              const updatedLead = {
+                ceo: {
+                  ...prev.ceo,
+                  ...dbConfig.leadership.ceo,
+                  pic: dbConfig.leadership.ceo?.pic || prev.ceo?.pic || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600"
+                },
+                md: {
+                  ...prev.md,
+                  ...dbConfig.leadership.md,
+                  pic: dbConfig.leadership.md?.pic || prev.md?.pic || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=600"
+                }
+              };
+              localStorage.setItem("nusrah_leadership_v1", JSON.stringify(updatedLead));
+              return updatedLead;
             });
           }
         }
@@ -278,6 +307,7 @@ export default function App() {
         const dbProducts = await dbGetProducts();
         if (dbProducts && dbProducts.length > 0) {
           setProducts(dbProducts);
+          localStorage.setItem("nusrah_products_v2", JSON.stringify(dbProducts));
         }
       } catch (err) {
         console.error(
@@ -728,9 +758,9 @@ export default function App() {
       nagadNumbers: ["+88 01851-282847", "+88 01857-275327"],
       rocketNumbers: ["+88 01857-275327"],
       addressEn:
-        "Nusrah Apparel, Islami Bank Bhaban, New Market, Morichya Bazar, Ukhiya, Cox's Bazar - 4700.",
+        "Nusrah Apparel, 3rd Floor, Islami Bank Building, New Market, Moricha Bazar, Ukhiya, Cox's Bazar–4700, Bangladesh",
       addressBn:
-        "নুসরাহ অ্যাপারেলস, ইসলামী ব্যাংক ভবন, নিউ মার্কেট, মরিচ্যা বাজার, উখিয়া, কক্সবাজার-৪৭০০।",
+        "নুসরাহ অ্যাপারেল, ৩য় তলা, ইসলামী ব্যাংক ভবন, নিউ মার্কেট, মরিচ্যা বাজার, উখিয়া, কক্সবাজার-৪৭০০, বাংলাদেশ",
       footerBioEn:
         "Pioneering custom authentic designs across premium apparel, traditional wear, skin-safe cosmetics & top essential modern electronics gadgets.",
       footerBioBn:
@@ -790,6 +820,14 @@ export default function App() {
           !parsed.email
         ) {
           parsed.email = "nusrah.apparel@gmail.com";
+        }
+        if (
+          !parsed.addressEn ||
+          parsed.addressEn.includes("Uttara") ||
+          !parsed.addressEn.includes("Ukhiya")
+        ) {
+          parsed.addressEn = defaultConfig.addressEn;
+          parsed.addressBn = defaultConfig.addressBn;
         }
         return { ...defaultConfig, ...parsed };
       } catch (e) {}
@@ -7605,7 +7643,7 @@ export default function App() {
               <div className="flex gap-3 pt-3">
                 {shopConfig.facebookLink && (
                   <a
-                    href={shopConfig.facebookLink}
+                    href={formatSocialUrl(shopConfig.facebookLink, 'facebook')}
                     target="_blank"
                     rel="noopener noreferrer"
                     title="Facebook Page"
@@ -7616,7 +7654,7 @@ export default function App() {
                 )}
                 {shopConfig.youtubeLink && (
                   <a
-                    href={shopConfig.youtubeLink}
+                    href={formatSocialUrl(shopConfig.youtubeLink, 'youtube')}
                     target="_blank"
                     rel="noopener noreferrer"
                     title="YouTube Channel"
@@ -7627,7 +7665,7 @@ export default function App() {
                 )}
                 {shopConfig.instagramLink && (
                   <a
-                    href={shopConfig.instagramLink}
+                    href={formatSocialUrl(shopConfig.instagramLink, 'instagram')}
                     target="_blank"
                     rel="noopener noreferrer"
                     title="Instagram Profile"
@@ -7638,7 +7676,7 @@ export default function App() {
                 )}
                 {shopConfig.whatsappLink && (
                   <a
-                    href={shopConfig.whatsappLink.startsWith('http') ? shopConfig.whatsappLink : `https://wa.me/${shopConfig.whatsappLink.replace(/[^0-9]/g, '')}`}
+                    href={formatSocialUrl(shopConfig.whatsappLink, 'whatsapp')}
                     target="_blank"
                     rel="noopener noreferrer"
                     title="WhatsApp"
@@ -7743,6 +7781,19 @@ export default function App() {
       </footer>
       </div>
       </div>
+
+      {/* Floating WhatsApp Chat Button */}
+      {shopConfig.whatsappLink && (
+        <a
+          href={formatSocialUrl(shopConfig.whatsappLink, 'whatsapp')}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Chat on WhatsApp"
+          className="fixed bottom-6 right-6 z-50 bg-[#25D366] hover:bg-[#20ba59] text-white p-4 rounded-full shadow-2xl flex items-center justify-center transition-all transform hover:scale-110 duration-300 animate-bounce cursor-pointer"
+        >
+          <MessageCircle className="w-7 h-7" />
+        </a>
+      )}
     </div>
   );
 }

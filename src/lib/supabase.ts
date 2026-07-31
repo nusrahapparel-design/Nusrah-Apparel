@@ -423,6 +423,9 @@ export async function dbGetShopConfig(): Promise<any | null> {
     }
 
     if (data) {
+      let addressEn = "Nusrah Apparel, 3rd Floor, Islami Bank Building, New Market, Moricha Bazar, Ukhiya, Cox's Bazar–4700, Bangladesh";
+      let addressBn = "নুসরাহ অ্যাপারেল, ৩য় তলা, ইসলামী ব্যাংক ভবন, নিউ মার্কেট, মরিচ্যা বাজার, উখিয়া, কক্সবাজার-৪৭০০, বাংলাদেশ";
+
       return {
         phoneEn: data.phone_en,
         phoneBn: data.phone_bn,
@@ -430,8 +433,8 @@ export async function dbGetShopConfig(): Promise<any | null> {
         bkashNumbers: data.bkash_numbers,
         nagadNumbers: data.nagad_numbers,
         rocketNumbers: data.rocket_numbers,
-        addressEn: data.address_en,
-        addressBn: data.address_bn,
+        addressEn,
+        addressBn,
         footerBioEn: data.footer_bio_en,
         footerBioBn: data.footer_bio_bn,
         announcementEn: data.announcement_en,
@@ -463,8 +466,8 @@ export async function dbSaveShopConfig(config: any): Promise<boolean> {
       bkash_numbers: config.bkashNumbers,
       nagad_numbers: config.nagadNumbers,
       rocket_numbers: config.rocketNumbers,
-      address_en: config.addressEn,
-      address_bn: config.addressBn,
+      address_en: "Nusrah Apparel, 3rd Floor, Islami Bank Building, New Market, Moricha Bazar, Ukhiya, Cox's Bazar–4700, Bangladesh",
+      address_bn: "নুসরাহ অ্যাপারেল, ৩য় তলা, ইসলামী ব্যাংক ভবন, নিউ মার্কেট, মরিচ্যা বাজার, উখিয়া, কক্সবাজার-৪৭০০, বাংলাদেশ",
       footer_bio_en: config.footerBioEn,
       footer_bio_bn: config.footerBioBn,
       announcement_en: config.announcementEn,
