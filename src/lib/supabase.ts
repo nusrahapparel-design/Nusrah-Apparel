@@ -408,6 +408,20 @@ export async function dbGetShopConfig(): Promise<any | null> {
       console.warn('Could not load leadership from database fallback:', err);
     }
 
+    let brandingData = null;
+    try {
+      const { data: brandData, error: brandError } = await supabase
+        .from('shop_config')
+        .select('address_en')
+        .eq('id', 'branding_current')
+        .single();
+      if (!brandError && brandData && brandData.address_en) {
+        brandingData = JSON.parse(brandData.address_en);
+      }
+    } catch (err) {
+      console.warn('Could not load branding from database fallback:', err);
+    }
+
     if (data) {
       return {
         phoneEn: data.phone_en,
@@ -426,6 +440,10 @@ export async function dbGetShopConfig(): Promise<any | null> {
         youtubeLink: data.youtube_link,
         instagramLink: data.instagram_link,
         leadership: leadershipData || null,
+        logoUrl: brandingData?.logoUrl || '',
+        footerLogoUrl: brandingData?.footerLogoUrl || '',
+        whatsappLink: brandingData?.whatsappLink || '',
+        liveVideoUrl: brandingData?.liveVideoUrl || '',
       };
     }
     return null;
@@ -480,9 +498,80 @@ export async function dbSaveShopConfig(config: any): Promise<boolean> {
       }
     }
 
+    // 3. Save branding data
+    const brandingPayload = {
+      id: 'branding_current',
+      address_en: JSON.stringify({ 
+        logoUrl: config.logoUrl, 
+        footerLogoUrl: config.footerLogoUrl,
+        whatsappLink: config.whatsappLink,
+        liveVideoUrl: config.liveVideoUrl 
+      })
+    };
+    const { error: brandError } = await supabase
+      .from('shop_config')
+      .upsert([brandingPayload]);
+    if (brandError) {
+      console.warn('Supabase save branding in row fallback failed:', brandError.message);
+    }
+
     return true;
   } catch (err) {
     console.error('Supabase save configuration exception:', err);
+    return false;
+  }
+}
+
+// ==========================================
+// DYNAMIC PRODUCTS SYNCRONIZATION
+// ==========================================
+
+export async function dbGetProducts(): Promise<any[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from('shop_config')
+      .select('address_en')
+      .eq('id', 'products_current')
+      .single();
+
+    if (error) {
+      console.warn('Supabase fetch products error:', error.message);
+      return null;
+    }
+
+    if (data && data.address_en) {
+      try {
+        return JSON.parse(data.address_en);
+      } catch (parseError) {
+        console.error('Failed to parse products from Supabase:', parseError);
+        return null;
+      }
+    }
+    return null;
+  } catch (err) {
+    console.error('Supabase get products exception:', err);
+    return null;
+  }
+}
+
+export async function dbSaveProducts(products: any[]): Promise<boolean> {
+  try {
+    const productsPayload = {
+      id: 'products_current',
+      address_en: JSON.stringify(products)
+    };
+
+    const { error } = await supabase
+      .from('shop_config')
+      .upsert([productsPayload]);
+
+    if (error) {
+      console.error('Supabase save products failure:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Supabase save products exception:', err);
     return false;
   }
 }

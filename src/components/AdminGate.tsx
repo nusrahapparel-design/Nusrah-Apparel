@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { Product, Review } from '../types';
 import { CATEGORIES } from '../data';
-import { dbUpdateOrderStatus, dbSaveShopConfig } from '../lib/supabase';
+import { dbUpdateOrderStatus, dbSaveShopConfig, dbSaveProducts } from '../lib/supabase';
 // @ts-ignore
 import nusrahLogo from '../assets/images/nusrah_logo_luxury_1780810335921.png';
 
@@ -261,22 +261,24 @@ export default function AdminGate({
 
   const confirmDeleteProduct = () => {
     if (productIdToDelete) {
-      setProducts(prev => prev.filter(p => p.id !== productIdToDelete));
+      const newProducts = products.filter(p => p.id !== productIdToDelete);
+      setProducts(newProducts);
+      dbSaveProducts(newProducts);
       setProductIdToDelete(null);
     }
   };
 
   // Quick state toggle: Stock toggle
   const toggleStockStatus = (product: Product) => {
-    setProducts(prev =>
-      prev.map(p => {
-        if (p.id === product.id) {
-          const newStock = p.stock > 0 ? 0 : 15;
-          return { ...p, stock: newStock };
-        }
-        return p;
-      })
-    );
+    const newProducts = products.map(p => {
+      if (p.id === product.id) {
+        const newStock = p.stock > 0 ? 0 : 15;
+        return { ...p, stock: newStock };
+      }
+      return p;
+    });
+    setProducts(newProducts);
+    dbSaveProducts(newProducts);
   };
 
   // Add Product Submit
@@ -310,7 +312,9 @@ export default function AdminGate({
       tags: []
     };
 
-    setProducts(prev => [productToAdd, ...prev]);
+    const newProducts = [productToAdd, ...products];
+    setProducts(newProducts);
+    dbSaveProducts(newProducts);
     setIsAddModalOpen(false);
     
     // Reset Form
@@ -352,22 +356,23 @@ export default function AdminGate({
       return;
     }
 
-    setProducts(prev =>
-      prev.map(p => {
-        if (p.id === editingProduct?.id) {
-          const finalImages = (editProductForm.images || []).filter(img => img && img.trim() !== '');
-          return {
-            ...p,
-            ...editProductForm,
-            images: finalImages.length > 0 ? finalImages : p.images,
-            price: Number(editProductForm.price),
-            originalPrice: editProductForm.originalPrice ? Number(editProductForm.originalPrice) : undefined,
-            stock: Number(editProductForm.stock)
-          } as Product;
-        }
-        return p;
-      })
-    );
+    const newProducts = products.map(p => {
+      if (p.id === editingProduct?.id) {
+        const finalImages = (editProductForm.images || []).filter(img => img && img.trim() !== '');
+        return {
+          ...p,
+          ...editProductForm,
+          images: finalImages.length > 0 ? finalImages : p.images,
+          price: Number(editProductForm.price),
+          originalPrice: editProductForm.originalPrice ? Number(editProductForm.originalPrice) : undefined,
+          stock: Number(editProductForm.stock)
+        } as Product;
+      }
+      return p;
+    });
+
+    setProducts(newProducts);
+    dbSaveProducts(newProducts);
 
     setEditingProduct(null);
     alert(lang === 'bn' ? 'পণ্যের বিবরণ সফলভাবে সংরক্ষণ করা হয়েছে!' : 'Product changes updated safely!');
@@ -448,7 +453,7 @@ export default function AdminGate({
           <div className="flex flex-col items-center text-center space-y-2">
             <div className="w-14 h-14 rounded-full bg-stone-850 border border-amber-500/30 overflow-hidden flex items-center justify-center shadow-lg">
               <img
-                src={nusrahLogo}
+                src={configForm.logoUrl || nusrahLogo}
                 alt="Logo"
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
@@ -551,21 +556,15 @@ export default function AdminGate({
           </div>
           <div>
             <h1 className="text-sm font-black tracking-tight text-black uppercase leading-none">
-              {lang === 'bn' ? 'নুসরাহ অ্যাপারেলস' : 'Nusrah Apparel'}
+              Nusrah Apparel
             </h1>
             <span className="text-[9px] font-black tracking-widest text-black uppercase">
-              {lang === 'bn' ? 'সিকিউর ম্যানেজমেন্ট ড্যাশবোর্ড' : 'Secure Admin Authority'}
+              Crafting Confidence Through Premium Fashion.
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')}
-            className="bg-[#FF6600] border border-white hover:border-white text-white hover:text-white rounded px-2 py-1 text-[10px] font-black transition-all cursor-pointer"
-          >
-            {lang === 'bn' ? 'ENGLISH MODE' : 'বাংলা সংস্করণ'}
-          </button>
           
           <button
             onClick={handleReturnToStorefront}
@@ -1614,34 +1613,118 @@ export default function AdminGate({
                     />
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase text-stone-450 tracking-wider block">Facebook Link</label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-black uppercase text-stone-450 tracking-wider">Facebook Link</label>
+                        {configForm.facebookLink && (
+                          <button
+                            type="button"
+                            onClick={() => setConfigForm({...configForm, facebookLink: ''})}
+                            className="text-[10px] text-rose-400 hover:text-rose-300 flex items-center gap-1 font-semibold"
+                            title="Remove / Clear"
+                          >
+                            <Trash2 className="w-3 h-3" /> Remove
+                          </button>
+                        )}
+                      </div>
                       <input
                         type="text"
                         value={configForm.facebookLink || ''}
                         onChange={(e) => setConfigForm({...configForm, facebookLink: e.target.value})}
+                        placeholder="https://facebook.com/..."
                         className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-mono text-xs"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase text-stone-450 tracking-wider block">Instagram Link</label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-black uppercase text-stone-450 tracking-wider">Instagram Link</label>
+                        {configForm.instagramLink && (
+                          <button
+                            type="button"
+                            onClick={() => setConfigForm({...configForm, instagramLink: ''})}
+                            className="text-[10px] text-rose-400 hover:text-rose-300 flex items-center gap-1 font-semibold"
+                            title="Remove / Clear"
+                          >
+                            <Trash2 className="w-3 h-3" /> Remove
+                          </button>
+                        )}
+                      </div>
                       <input
                         type="text"
                         value={configForm.instagramLink || ''}
                         onChange={(e) => setConfigForm({...configForm, instagramLink: e.target.value})}
+                        placeholder="https://instagram.com/..."
                         className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-mono text-xs"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase text-stone-450 tracking-wider block">YouTube Link</label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-black uppercase text-stone-450 tracking-wider">YouTube Link</label>
+                        {configForm.youtubeLink && (
+                          <button
+                            type="button"
+                            onClick={() => setConfigForm({...configForm, youtubeLink: ''})}
+                            className="text-[10px] text-rose-400 hover:text-rose-300 flex items-center gap-1 font-semibold"
+                            title="Remove / Clear"
+                          >
+                            <Trash2 className="w-3 h-3" /> Remove
+                          </button>
+                        )}
+                      </div>
                       <input
                         type="text"
                         value={configForm.youtubeLink || ''}
                         onChange={(e) => setConfigForm({...configForm, youtubeLink: e.target.value})}
+                        placeholder="https://youtube.com/..."
                         className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-mono text-xs"
                       />
                     </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-black uppercase text-stone-450 tracking-wider">WhatsApp Link</label>
+                        {configForm.whatsappLink && (
+                          <button
+                            type="button"
+                            onClick={() => setConfigForm({...configForm, whatsappLink: ''})}
+                            className="text-[10px] text-rose-400 hover:text-rose-300 flex items-center gap-1 font-semibold"
+                            title="Remove / Clear"
+                          >
+                            <Trash2 className="w-3 h-3" /> Remove
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        value={configForm.whatsappLink || ''}
+                        onChange={(e) => setConfigForm({...configForm, whatsappLink: e.target.value})}
+                        placeholder="+88018..."
+                        className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-mono text-xs"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1 mt-4">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] font-black uppercase text-stone-450 tracking-wider">Live Video Embed Link (YouTube URL / Iframe src)</label>
+                      {configForm.liveVideoUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setConfigForm({...configForm, liveVideoUrl: ''})}
+                          className="text-[10px] text-rose-400 hover:text-rose-300 flex items-center gap-1 font-semibold"
+                          title="Remove / Clear"
+                        >
+                          <Trash2 className="w-3 h-3" /> Remove Video
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={configForm.liveVideoUrl || ''}
+                      onChange={(e) => setConfigForm({...configForm, liveVideoUrl: e.target.value})}
+                      placeholder="https://www.youtube.com/embed/..."
+                      className="w-full bg-stone-850 border border-stone-800 text-white rounded-lg px-3 py-2 font-mono text-xs"
+                    />
                   </div>
 
                   {/* WEBSITE BRANDING & GLOBAL STYLING CUSTOMIZATION (NEW) */}
@@ -2423,46 +2506,81 @@ export default function AdminGate({
                     <h3 className="text-sm font-black text-amber-500 uppercase tracking-wider mb-4">Leadership Section</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* CEO */}
-                      <div className="space-y-2 border border-stone-800 p-4 rounded-lg">
-                        <h4 className="font-bold text-stone-200">Managing Director (CEO)</h4>
-                        <input type="text" placeholder="Name (EN)" value={leadershipForm.ceo.nameEn} onChange={(e) => setLeadershipForm({...leadershipForm, ceo: {...leadershipForm.ceo, nameEn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded" />
-                        <input type="text" placeholder="Name (BN)" value={leadershipForm.ceo.nameBn} onChange={(e) => setLeadershipForm({...leadershipForm, ceo: {...leadershipForm.ceo, nameBn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded" />
-                        <input type="text" placeholder="Title (EN)" value={leadershipForm.ceo.titleEn} onChange={(e) => setLeadershipForm({...leadershipForm, ceo: {...leadershipForm.ceo, titleEn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded" />
-                        <input type="text" placeholder="Title (BN)" value={leadershipForm.ceo.titleBn} onChange={(e) => setLeadershipForm({...leadershipForm, ceo: {...leadershipForm.ceo, titleBn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded" />
-                        <label className="text-xs text-stone-400">Picture Update Only via URL</label>
-                        <input type="text" placeholder="Picture URL (e.g. uploaded file URL)" value={leadershipForm.ceo.pic} onChange={(e) => setLeadershipForm({...leadershipForm, ceo: {...leadershipForm.ceo, pic: e.target.value}})} className="w-full bg-stone-850 p-2 rounded" />
-                        <label className="text-xs text-stone-400">Or Upload File:</label>
-                        <input type="file" onChange={(e) => {
+                      <div className="space-y-2 border border-stone-800 p-4 rounded-lg bg-stone-900/40">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-bold text-stone-200 text-xs">Managing Director (CEO)</h4>
+                          {leadershipForm.ceo.pic && (
+                            <div className="w-10 h-10 rounded-full overflow-hidden border border-stone-700 bg-stone-800 flex-shrink-0">
+                              <img src={leadershipForm.ceo.pic} alt="CEO Preview" className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                        </div>
+                        <input type="text" placeholder="Name (EN)" value={leadershipForm.ceo.nameEn} onChange={(e) => setLeadershipForm({...leadershipForm, ceo: {...leadershipForm.ceo, nameEn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded text-xs text-white" />
+                        <input type="text" placeholder="Name (BN)" value={leadershipForm.ceo.nameBn} onChange={(e) => setLeadershipForm({...leadershipForm, ceo: {...leadershipForm.ceo, nameBn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded text-xs text-white" />
+                        <input type="text" placeholder="Title (EN)" value={leadershipForm.ceo.titleEn} onChange={(e) => setLeadershipForm({...leadershipForm, ceo: {...leadershipForm.ceo, titleEn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded text-xs text-white" />
+                        <input type="text" placeholder="Title (BN)" value={leadershipForm.ceo.titleBn} onChange={(e) => setLeadershipForm({...leadershipForm, ceo: {...leadershipForm.ceo, titleBn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded text-xs text-white" />
+                        
+                        <label className="text-[11px] font-bold text-stone-300 block pt-1">Profile Photo (URL or File Upload):</label>
+                        <div className="flex gap-2">
+                          <input type="text" placeholder="Picture URL" value={leadershipForm.ceo.pic} onChange={(e) => setLeadershipForm({...leadershipForm, ceo: {...leadershipForm.ceo, pic: e.target.value}})} className="flex-1 bg-stone-850 p-2 rounded text-xs text-stone-200 font-mono" />
+                          <button
+                            type="button"
+                            onClick={() => setLeadershipForm(prev => ({...prev, ceo: {...prev.ceo, pic: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600"}}))}
+                            className="px-2 py-1 bg-stone-800 hover:bg-stone-700 text-[10px] text-amber-400 font-bold rounded"
+                          >
+                            Default
+                          </button>
+                        </div>
+                        <input type="file" accept="image/*" onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
                             compressImageFile(file, (resized) => {
                               setLeadershipForm(prev => ({...prev, ceo: {...prev.ceo, pic: resized}}));
                             });
                           }
-                        }} className="w-full bg-stone-850 p-2 rounded text-xs" />
-                        <textarea placeholder="Message (EN)" value={leadershipForm.ceo.textEn} onChange={(e) => setLeadershipForm({...leadershipForm, ceo: {...leadershipForm.ceo, textEn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded h-20" />
-                        <textarea placeholder="Message (BN)" value={leadershipForm.ceo.textBn} onChange={(e) => setLeadershipForm({...leadershipForm, ceo: {...leadershipForm.ceo, textBn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded h-20" />
+                        }} className="w-full bg-stone-850 p-1.5 rounded text-xs text-stone-300" />
+
+                        <textarea placeholder="Message (EN)" value={leadershipForm.ceo.textEn} onChange={(e) => setLeadershipForm({...leadershipForm, ceo: {...leadershipForm.ceo, textEn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded h-20 text-xs text-stone-200" />
+                        <textarea placeholder="Message (BN)" value={leadershipForm.ceo.textBn} onChange={(e) => setLeadershipForm({...leadershipForm, ceo: {...leadershipForm.ceo, textBn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded h-20 text-xs text-stone-200" />
                       </div>
+
                       {/* MD */}
-                      <div className="space-y-2 border border-stone-800 p-4 rounded-lg">
-                        <h4 className="font-bold text-stone-200">Director (Operations & Marketing)</h4>
-                        <input type="text" placeholder="Name (EN)" value={leadershipForm.md.nameEn} onChange={(e) => setLeadershipForm({...leadershipForm, md: {...leadershipForm.md, nameEn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded" />
-                        <input type="text" placeholder="Name (BN)" value={leadershipForm.md.nameBn} onChange={(e) => setLeadershipForm({...leadershipForm, md: {...leadershipForm.md, nameBn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded" />
-                        <input type="text" placeholder="Title (EN)" value={leadershipForm.md.titleEn} onChange={(e) => setLeadershipForm({...leadershipForm, md: {...leadershipForm.md, titleEn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded" />
-                        <input type="text" placeholder="Title (BN)" value={leadershipForm.md.titleBn} onChange={(e) => setLeadershipForm({...leadershipForm, md: {...leadershipForm.md, titleBn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded" />
-                        <label className="text-xs text-stone-400">Picture Update Only via URL</label>
-                        <input type="text" placeholder="Picture URL (e.g. uploaded file URL)" value={leadershipForm.md.pic} onChange={(e) => setLeadershipForm({...leadershipForm, md: {...leadershipForm.md, pic: e.target.value}})} className="w-full bg-stone-850 p-2 rounded" />
-                        <label className="text-xs text-stone-400">Or Upload File:</label>
-                        <input type="file" onChange={(e) => {
+                      <div className="space-y-2 border border-stone-800 p-4 rounded-lg bg-stone-900/40">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-bold text-stone-200 text-xs">Director (Operations & Marketing)</h4>
+                          {leadershipForm.md.pic && (
+                            <div className="w-10 h-10 rounded-full overflow-hidden border border-stone-700 bg-stone-800 flex-shrink-0">
+                              <img src={leadershipForm.md.pic} alt="Director Preview" className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                        </div>
+                        <input type="text" placeholder="Name (EN)" value={leadershipForm.md.nameEn} onChange={(e) => setLeadershipForm({...leadershipForm, md: {...leadershipForm.md, nameEn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded text-xs text-white" />
+                        <input type="text" placeholder="Name (BN)" value={leadershipForm.md.nameBn} onChange={(e) => setLeadershipForm({...leadershipForm, md: {...leadershipForm.md, nameBn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded text-xs text-white" />
+                        <input type="text" placeholder="Title (EN)" value={leadershipForm.md.titleEn} onChange={(e) => setLeadershipForm({...leadershipForm, md: {...leadershipForm.md, titleEn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded text-xs text-white" />
+                        <input type="text" placeholder="Title (BN)" value={leadershipForm.md.titleBn} onChange={(e) => setLeadershipForm({...leadershipForm, md: {...leadershipForm.md, titleBn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded text-xs text-white" />
+                        
+                        <label className="text-[11px] font-bold text-stone-300 block pt-1">Profile Photo (URL or File Upload):</label>
+                        <div className="flex gap-2">
+                          <input type="text" placeholder="Picture URL" value={leadershipForm.md.pic} onChange={(e) => setLeadershipForm({...leadershipForm, md: {...leadershipForm.md, pic: e.target.value}})} className="flex-1 bg-stone-850 p-2 rounded text-xs text-stone-200 font-mono" />
+                          <button
+                            type="button"
+                            onClick={() => setLeadershipForm(prev => ({...prev, md: {...prev.md, pic: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=600"}}))}
+                            className="px-2 py-1 bg-stone-800 hover:bg-stone-700 text-[10px] text-amber-400 font-bold rounded"
+                          >
+                            Default
+                          </button>
+                        </div>
+                        <input type="file" accept="image/*" onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
                             compressImageFile(file, (resized) => {
                               setLeadershipForm(prev => ({...prev, md: {...prev.md, pic: resized}}));
                             });
                           }
-                        }} className="w-full bg-stone-850 p-2 rounded text-xs" />
-                        <textarea placeholder="Message (EN)" value={leadershipForm.md.textEn} onChange={(e) => setLeadershipForm({...leadershipForm, md: {...leadershipForm.md, textEn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded h-20" />
-                        <textarea placeholder="Message (BN)" value={leadershipForm.md.textBn} onChange={(e) => setLeadershipForm({...leadershipForm, md: {...leadershipForm.md, textBn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded h-20" />
+                        }} className="w-full bg-stone-850 p-1.5 rounded text-xs text-stone-300" />
+
+                        <textarea placeholder="Message (EN)" value={leadershipForm.md.textEn} onChange={(e) => setLeadershipForm({...leadershipForm, md: {...leadershipForm.md, textEn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded h-20 text-xs text-stone-200" />
+                        <textarea placeholder="Message (BN)" value={leadershipForm.md.textBn} onChange={(e) => setLeadershipForm({...leadershipForm, md: {...leadershipForm.md, textBn: e.target.value}})} className="w-full bg-stone-850 p-2 rounded h-20 text-xs text-stone-200" />
                       </div>
                     </div>
                   </div>
