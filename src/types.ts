@@ -52,3 +52,36 @@ export interface Review {
   date: string;
   avatar?: string;
 }
+
+export interface PurchaseRecord {
+  id: string;
+  date: string;
+  orderId: string;
+  amount: number;
+  itemsSummary: string;
+}
+
+export interface RedemptionRequest {
+  id: string;
+  points: number;
+  requestDate: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+}
+
+export interface LoyaltyCustomer {
+  slNo: number;
+  clientId: string;
+  userName: string;
+  clientName: string;
+  address: string;
+  mobileNumber: string;
+  pin: string;
+  totalShopping: number;
+  totalAwardPoint: number;
+  redeemedAwardPoint: number;
+  availableAwardPoint: number;
+  registrationDate: string;
+  status: 'Active' | 'VIP' | 'Inactive';
+  purchases: PurchaseRecord[];
+  redemptionRequests: RedemptionRequest[];
+}

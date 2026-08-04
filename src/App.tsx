@@ -47,6 +47,7 @@ import {
   Tag,
   Filter,
   Sparkles,
+  Award,
   ShoppingBag,
   ListFilter,
   Layers,
@@ -81,6 +82,7 @@ import {
 // @ts-ignore
 import nusrahLogo from "./assets/images/nusrah_logo_luxury_1780810335921.png";
 import AdminGate from "./components/AdminGate";
+import LoyaltyClubSystem from "./components/LoyaltyClubSystem";
 import {
   dbGetOrders,
   dbInsertOrder,
@@ -178,8 +180,9 @@ export default function App() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [isWalletOpen, setIsWalletOpen] = useState(false);
+  const [isLoyaltyOpen, setIsLoyaltyOpen] = useState(false);
   const [activeProfileTab, setActiveProfileTab] = useState<
-    "overview" | "orders" | "addresses" | "settings" | "wishlist" | "register"
+    "overview" | "orders" | "addresses" | "settings" | "wishlist" | "register" | "loyalty"
   >("overview");
   const [dashSignupForm, setDashSignupForm] = useState({
     name: "",
@@ -2322,6 +2325,18 @@ export default function App() {
               </span>
             </button>
           )}
+
+
+
+          {/* LOYALTY CLUB BUTTON */}
+          <button
+            onClick={() => setIsLoyaltyOpen(true)}
+            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-stone-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+            title={lang === "bn" ? "লয়্যালটি ক্লাব ও রিওয়ার্ড" : "Loyalty Club & Rewards"}
+          >
+            <Award className="w-4 h-4" />
+            <span className="hidden sm:inline">{lang === "bn" ? "লয়্যালটি ক্লাব" : "Loyalty Club"}</span>
+          </button>
 
           {/* Cart Icon Drawer button */}
           <button
@@ -6095,6 +6110,14 @@ export default function App() {
                         : "Register New Customer",
                     icon: UserPlus,
                   },
+                  {
+                    id: "loyalty",
+                    label:
+                      lang === "bn"
+                        ? "লয়্যালটি ক্লাব ও রিওয়ার্ড"
+                        : "Loyalty Club & Rewards",
+                    icon: Award,
+                  },
                 ]
                   .filter(
                     (item) =>
@@ -7151,6 +7174,114 @@ export default function App() {
                   </div>
                 </div>
               )}
+
+              {/* Tab: Loyalty Club & Rewards */}
+              {activeProfileTab === "loyalty" && (
+                <div className="animate-fade-in space-y-8 pb-10">
+                  <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 border border-stone-800 p-8 rounded-[32px] text-white shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-8 text-amber-500/10 pointer-events-none">
+                      <Award className="w-32 h-32" />
+                    </div>
+                    <div className="relative z-10 space-y-3">
+                      <span className="bg-amber-500/20 text-amber-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-amber-500/30">
+                        {lang === "bn" ? "ইউনিক কাস্টমার আইডি ও লয়্যালটি ক্লাব" : "Unified Client ID & Loyalty Club"}
+                      </span>
+                      <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                        {currentUser ? currentUser.name : (lang === "bn" ? "সম্মানিত অতিথি সদস্য" : "Valued Guest Member")}
+                      </h2>
+                      <div className="flex flex-wrap items-center gap-3 pt-2">
+                        <span className="bg-amber-500 text-stone-950 px-3 py-1 rounded-xl text-xs font-mono font-black shadow">
+                          {currentUser ? `NA-CL-${Math.abs(currentUser.email.split('').reduce((acc, char) => acc + char.charCodeAt(0), 1000))}` : "NA-CL-GUEST"}
+                        </span>
+                        <span className="text-xs text-stone-300 font-bold">
+                          {currentUser ? currentUser.email : "Please log in to sync your permanent Customer ID"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Loyalty Stats Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    {(() => {
+                      const userOrders = currentUser ? orders.filter(o => o.email === currentUser.email) : [];
+                      const totalShop = userOrders.reduce((sum, o) => sum + o.total, 0);
+                      const totalPts = Math.floor(totalShop * 0.05);
+                      return (
+                        <>
+                          <div className="bg-white border border-stone-200 p-6 rounded-2xl shadow-sm">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1">
+                              {lang === "bn" ? "মোট কেনাকাটা" : "Total Shopping"}
+                            </p>
+                            <h3 className="text-2xl font-black text-stone-900">৳{totalShop.toLocaleString()}</h3>
+                            <p className="text-[10px] text-stone-500 mt-1 font-bold">{userOrders.length} orders completed</p>
+                          </div>
+                          <div className="bg-white border border-stone-200 p-6 rounded-2xl shadow-sm">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1">
+                              {lang === "bn" ? "অর্জিত পয়েন্ট (৫%)" : "Earned Points (5%)"}
+                            </p>
+                            <h3 className="text-2xl font-black text-emerald-600">{totalPts} pts</h3>
+                            <p className="text-[10px] text-stone-500 mt-1 font-bold">5% reward calculation</p>
+                          </div>
+                          <div className="bg-white border border-stone-200 p-6 rounded-2xl shadow-sm">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1">
+                              {lang === "bn" ? "রিডিম করা পয়েন্ট" : "Redeemed Points"}
+                            </p>
+                            <h3 className="text-2xl font-black text-blue-600">0 pts</h3>
+                            <p className="text-[10px] text-stone-500 mt-1 font-bold">Withdrawn rewards</p>
+                          </div>
+                          <div className="bg-amber-500/10 border border-amber-500/30 p-6 rounded-2xl shadow-sm">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-amber-700 mb-1">
+                              {lang === "bn" ? "উপলব্ধ ব্যালেন্স" : "Available Points"}
+                            </p>
+                            <h3 className="text-2xl font-black text-amber-600">{totalPts} pts</h3>
+                            <p className="text-[10px] text-amber-800 mt-1 font-bold">Ready to redeem</p>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Purchase History & Points Table */}
+                  <div className="bg-white border border-stone-200 rounded-[30px] p-8 shadow-sm space-y-6">
+                    <h3 className="text-lg font-black text-stone-900 uppercase tracking-tight flex items-center gap-2">
+                      <ShoppingBag className="w-5 h-5 text-amber-500" />
+                      {lang === "bn" ? "অর্ডার ও লয়্যালটি পয়েন্ট হিস্ট্রি" : "Order & Loyalty Points Breakdown"}
+                    </h3>
+
+                    {currentUser && orders.filter(o => o.email === currentUser.email).length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-stone-100 text-stone-600 uppercase font-mono text-[10px]">
+                            <tr>
+                              <th className="p-3 rounded-l-xl">Order ID</th>
+                              <th className="p-3">Date</th>
+                              <th className="p-3">Total Amount</th>
+                              <th className="p-3 text-right rounded-r-xl">Award Points (5%)</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-stone-100 font-medium">
+                            {orders.filter(o => o.email === currentUser.email).map(order => (
+                              <tr key={order.orderId} className="hover:bg-stone-50">
+                                <td className="p-3 font-mono font-bold text-amber-600">#{order.orderId}</td>
+                                <td className="p-3 text-stone-500">{order.date}</td>
+                                <td className="p-3 font-bold text-stone-900">৳{order.total.toLocaleString()}</td>
+                                <td className="p-3 text-right font-bold text-emerald-600">+{Math.floor(order.total * 0.05)} pts</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 bg-stone-50 rounded-2xl border-2 border-dashed border-stone-200">
+                        <ShoppingBag className="w-12 h-12 text-stone-300 mx-auto mb-3" />
+                        <p className="text-stone-500 text-xs font-bold">
+                          {lang === "bn" ? "কোনো অর্ডারের তথ্য পাওয়া যায়নি। অর্ডার করুন এবং পয়েন্ট অর্জন করুন!" : "No orders found for this account. Place an order to start earning 5% loyalty points!"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -7794,6 +7925,26 @@ export default function App() {
           <MessageCircle className="w-7 h-7" />
         </a>
       )}
+
+      {/* LOYALTY CLUB MODAL */}
+      {isLoyaltyOpen && (
+        <div className="fixed inset-0 z-[140] overflow-y-auto bg-stone-950/90 backdrop-blur-md">
+          <div className="min-h-screen px-4 py-6 relative">
+            <button
+              onClick={() => setIsLoyaltyOpen(false)}
+              className="absolute top-6 right-6 z-30 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-stone-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-2xl flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
+            >
+              <X className="w-4 h-4 font-black" />
+              <span>{lang === "bn" ? "স্টোরে ফিরে যান" : "Back to Store"}</span>
+            </button>
+            <div className="max-w-7xl mx-auto pt-10">
+              <LoyaltyClubSystem lang={lang} />
+            </div>
+          </div>
+        </div>
+      )}
+
+
     </div>
   );
 }
